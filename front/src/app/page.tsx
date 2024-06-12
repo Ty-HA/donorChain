@@ -7,7 +7,7 @@ const ButtonStart = () => {
   return (
     <a
       href="/loginHome"
-      className="bg-[#92CD00] hover:bg-[#5aa73b] active:bg-[#92CD00] text-white sm:px-12 px-4 mt-8 py-2 sm:py-1.5 md:py-3 text-lg font-semibold rounded-full whitespace-nowrap"
+      className="bg-[#92CD00] hover:bg-[#5aa73b] active:bg-[#92CD00] text-white sm:px-12 px-4 mt-8 py-3 sm:py-1.5 md:py-4 text-lg font-semibold rounded-full whitespace-nowrap"
     >
       DONATE NOW →
     </a>
@@ -16,14 +16,20 @@ const ButtonStart = () => {
 
 const FirstSection = () => {
   return (
-    <section className="flex sm:flex-row flex-col-reverse justify-end items-center pb-20 w-full bg-slate-200 pt-20">
+    <section className="flex sm:flex-row flex-col-reverse justify-around items-center pb-20 w-full bg-blue-800 pt-20">
       <div className="sm:w-1/2 xl:pl-60 lg:pl-32 px-8">
-        <h1 className="text-black mt-4 xl:text-4xl lg:text-3xl text-2xl font-semibold mb-8 leading-loose">
-          DONOR CHAIN LOGO
-        </h1>
+      <Image
+            src="/logo.png"
+            alt="DonorChain logo"
+            className="rounded-[30px]"
+            width="250"
+            height="100"
+       
+          />
+       
         <h2
           style={{ lineHeight: "1.2" }}
-          className="text-black mt-4 xl:text-5xl lg:text-3xl text-2xl font-semibold mb-12 leading-loose"
+          className="text-white mt-6 xl:text-5xl lg:text-3xl text-2xl font-semibold mb-12 leading-loose"
         >
           Transparency in every donation, powered by blockchain technology.
         </h2>
@@ -36,6 +42,7 @@ const FirstSection = () => {
           alt="home image"
           width="600"
           height="600"
+          className="rounded-[25px]"
         />
       </div>
     </section>

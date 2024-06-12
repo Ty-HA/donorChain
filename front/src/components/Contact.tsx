@@ -7,7 +7,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="w-screen h-screen flex flex-col items-center justify-center text-center md:ml-10 z-0 bg-green-200"
+      className="w-screen h-screen flex flex-col items-center justify-center text-center z-0 bg-blue-400"
     >
       <div className="py-8 lg:py-16 px-4 mx-auto max-w-screen-md mb-8 mt-24 lg:mt-10 se:mt-24 se:mb-24">
         <div className="mb-8">

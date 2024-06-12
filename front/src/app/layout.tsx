@@ -12,9 +12,9 @@ import Footer from "@/components/Footer";
 const inter = Inter({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Pawesome ID",
-  description: "Decentralized Passport for pets",
-  keywords: "web, web3, passport, blockchain, pet, dog, cat",
+  title: "Donor Chain",
+  description: "Donation platform powered by blockchain technology",
+  keywords: "web, web3, blockchain",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Pawesome ID</title>
+        <title>Donor Chain</title>
       </head>
       <body className={inter.className}>
         <>
