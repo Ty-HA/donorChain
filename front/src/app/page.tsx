@@ -51,15 +51,15 @@ const FirstSection = () => {
 
 const information = (title: string, paragraph: string, srcImage: string) => {
   return (
-    <div className="lg:w-1/4 px-2 min-h-7">
-      <div className="flex items-center flex-row">
+    <div className="lg:w-1/4 px-2 min-h-7 flex flex-col">
+      <div className="flex flex-col items-center">
         <Image
           src={srcImage}
           color="#ECAA00"
-          className="w-8 h-8 mr-4 justify-center"
+          className="w-24 h-24 justify-center mb-4 border-2 rounded-full border-green-500"
           alt="Icon"
-          width="200"
-          height="200"
+          width="500"
+          height="500"
         />
         <h1
           className="text-black xl:text-xl lg:text-l text-m font-semibold whitespace-normal
@@ -68,7 +68,7 @@ const information = (title: string, paragraph: string, srcImage: string) => {
           {title}
         </h1>
       </div>
-      <p className="text-gray-500 whitespace-normal mt-8 mb-8 mr-8 xl:text-l text-m">
+      <p className="text-gray-500 whitespace-normal mt-4 mb-8 xl:text-l text-m  text-center">
         {paragraph}
       </p>
     </div>
@@ -212,26 +212,29 @@ const App = () => {
             </div>
           </section>
         </div>
-      <div className="bg-white pb-8">
+      <div className="bg-white mb-8">
         <section className="flex lg:flex-row flex-col justify-around pt-12 sm:px-32 px-4 w-full bg-white">
           {information(
-            "Access Medical Records",
-            "Healthcare professionals can access comprehensive medical histories to provide better care.",
+            "Healthcare",
+            "To provide better care",
             "/icons/book-medical.png"
           )}
           {information(
-            "A Supportive Community",
-            "Donors and recipients can access transparent information about the origins and impacts of their contributions, fostering trust and community.",
+            "A Community",
+            "Worldwide community",
             "/icons/people-community.png"
           )}
           {information(
-            "Healthcare Initiatives",
-            "Donate to help healthcare organizations in their mission to provide care and support to those in need.",
+            "Innovation",
+            "Blockchain technology",
             "/icons/donation.png"
           )}
-        </section>
-
-        
+          {information(
+            "Transparent",
+            "Description",
+            "/icons/donation.png"
+          )}
+        </section>        
       </div>
       <Contact />
     </>

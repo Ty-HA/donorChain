@@ -1,4 +1,6 @@
 import React from "react";
+import CustomRainbowKitProvider from "./CustomRainbowKitProvider";
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
 import { Metadata } from "next";
 
 import "./globals.css";
@@ -14,7 +16,7 @@ const inter = Inter({ weight: "400", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Donor Chain",
   description: "Donation platform powered by blockchain technology",
-  keywords: "web, web3, blockchain",
+  keywords: "web3, blockchain, donations, charity, transparency, NFTs",
 };
 
 export default function RootLayout({
@@ -28,15 +30,14 @@ export default function RootLayout({
         <title>Donor Chain</title>
       </head>
       <body className={inter.className}>
-        <>
-        <NavBar/>
-
-      <main className="flex flex-col items-center justify-between">        
-      {children}
-      </main>
-      <Footer/>
-        </>
-        </body>
+        <CustomRainbowKitProvider>
+          <NavBar />
+          <main className="flex flex-col items-center justify-between">
+            {children}
+          </main>
+          <Footer />
+        </CustomRainbowKitProvider>
+      </body>
     </html>
   );
 }

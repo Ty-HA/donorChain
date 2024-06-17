@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { Navbar } from "flowbite-react";
+import { Navbar, Dropdown } from "flowbite-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
+import ConnectWallet from "./ConnectWallet";
 // import CrossmarkButton from "./CrossmarkButton";
-import Web3AuthLogin from "./web3auth/Web3AuthLogin";
+// import Web3AuthLogin from "./web3auth/Web3AuthLogin";
 
 export default function NavBar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   return (
     <>
       <Navbar fluid rounded className="top-0 w-full py-4 z-10 bg-[15,16,46] ">
@@ -60,20 +63,25 @@ export default function NavBar() {
           >
             Contact
           </Navbar.Link>
-          <Navbar.Link href="/">
-            <a
-              href="/loginHome"
-              className="bg-[#92CD00] hover:bg-[#5aa73b] active:bg-[#92CD00] text-white sm:px-4 px-4 mt-8 py-3 sm:py-1.5 md:py-2 text-lg font-semibold rounded-full whitespace-nowrap"
+          
+          {/*<Navbar.Link href="/" onClick={(e) => e.preventDefault()}>
+            <Dropdown
+              label=""
+              dismissOnClick={false}
+              renderTrigger={() => <span className="bg-blue-500 text-white py-2 px-4 rounded-xl text-lg">Login</span>}
             >
-              LOGIN
-            </a>
-          </Navbar.Link>
+              <Dropdown.Item>As Association</Dropdown.Item>
+              <Dropdown.Item>As Donator</Dropdown.Item>
+              
+            </Dropdown>
+          </Navbar.Link>*/}
           <Navbar.Link
             href="/"
             className="text-lg flex justify-left items-center text-black"
           >
             <FontAwesomeIcon icon={faCog} className="mr-4 my-1" />
           </Navbar.Link>
+          <ConnectWallet />
         </Navbar.Collapse>
       </Navbar>
     </>
