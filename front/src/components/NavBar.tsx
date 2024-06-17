@@ -76,7 +76,7 @@ export default function NavBar() {
             </Dropdown>
           </Navbar.Link>*/}
           <Navbar.Link
-            href="/"
+            href="/settings"
             className="text-lg flex justify-left items-center text-black"
           >
             <FontAwesomeIcon icon={faCog} className="mr-4 my-1" />

@@ -1,6 +1,6 @@
 import React from "react";
 import CustomRainbowKitProvider from "./CustomRainbowKitProvider";
-import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+
 import { Metadata } from "next";
 
 import "./globals.css";
