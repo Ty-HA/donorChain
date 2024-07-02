@@ -14,8 +14,17 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 /// @notice You can use this contract for donating ether to the contract
 contract Donation is Ownable, ReentrancyGuard {
     /// @notice A struct to represent an association
+    /// @param name The name of the association
+    /// @param postalAddress The postal address of the association
+    /// @param rnaNumber The RNA number of the association, french associations are required to have one
+    /// @param balance The balance of the association
+    /// @param addr The address of the association
+    /// @param whitelisted The whitelisted status of the association
+    /// @param lastDeposit The timestamp of the last deposit made to the association
     struct Association {
         string name;
+        string postalAddress;
+        string rnaNumber;
         uint256 balance;
         address addr;
         bool whitelisted;
@@ -28,6 +37,10 @@ contract Donation is Ownable, ReentrancyGuard {
         uint256 amount;
         uint256 timestamp;
     }
+
+    /// @notice The total amount of amount donated to the contract
+    uint256 private accumulatedCommissions;
+
 
     /// @notice A mapping of total donations made by each address
     mapping(address => uint256) public totalDonationsFromDonor;
@@ -45,21 +58,25 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice An array of whitelisted associations
     address[] public associationList;
 
-    /// @notice Events to log donation, funds transfer, and association changes
-    event FundsTransferred(
-        address indexed recipient,
-        uint256 amount,
-        string purpose
-    );
+   
 
-    event AssociationAdded(address indexed association, string name);
+    event AssociationAdded(address indexed association, string name, string postalAddress, string rnaNumber);
     event AssociationRemoved(address indexed association);
+    event AssociationAddrUpdated(address indexed association, string postalAddress);
+    event AssociationWalletAddrUpdated(address indexed association, address newAddr);
     /// Efficient filtering for donations by either donor address, association address, or both.
     event DonationReceived(
         address indexed donor,
         uint256 amount,
         address indexed association
     );
+     /// @notice Events to log donation, funds transfer, and association changes
+    event FundsTransferred(
+        address indexed recipient,
+        uint256 amountAfetrCommission,
+        string purpose
+    );
+    event CommissionsWithdrawn(uint256 amount);
 
     /// @dev Sets the original owner of the contract upon deployment
     constructor() Ownable(msg.sender) {}
@@ -79,29 +96,83 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice Adds an association to the whitelist
     /// @param _association The address of the association to add
     /// @param _name The name of the association
+    /// @param _postalAddress The postal address of the association
+    /// @param _rnaNumber The RNA number of the association
     function addAssociation(
-        address _association,
-        string memory _name
+        address  _association,
+        string memory _name,
+        string memory _postalAddress,
+        string memory _rnaNumber
     ) external onlyOwner {
-        require(_association != address(0), "Invalid address");
+        require( _association != address(0), "Invalid address");
         require(
-            !associations[_association].whitelisted,
+            !associations[ _association].whitelisted,
             "Association already whitelisted"
         );
         require(bytes(_name).length > 0, "Association name cannot be empty");
+        require(
+            bytes(_postalAddress).length > 0,
+            "Postal address cannot be empty"
+        );
 
-        associations[_association] = Association({
+        associations[ _association] = Association({
             name: _name,
+            postalAddress: _postalAddress,
+            rnaNumber: _rnaNumber,
             balance: 0,
-            addr: _association,
+            addr:  _association,
             whitelisted: true,
             lastDeposit: block.timestamp
         });
 
-        associationId[_association] = associationList.length;
+        associationId[ _association] = associationList.length;
         associationList.push(_association);
 
-        emit AssociationAdded(_association, _name);
+        emit AssociationAdded(_association, _name, _postalAddress, _rnaNumber);
+    }
+
+    /// @notice Update association information if they want to change their wallet address
+    /// @param _addr The current address of the association
+    /// @param _newAddr The new address of the association
+
+    function updateAssociationWalletAddr(
+        address _addr,
+        address _newAddr,
+
+    ) external onlyOwner {
+        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(_newAddr != address(0), "Invalid address");
+
+        // Update the association's address and name
+        associations[_addr].addr = _newAddr;
+
+        // Optionally, if you want to update the mapping key to the new address
+        // First, save the association data
+        Association memory updatedAssociation = associations[_addr];
+        // Update the address in the struct
+        updatedAssociation.addr = _newAddr;
+        // Remove the old entry
+        delete associations[_addr];
+        // Add the updated association with the new address as the key
+        associations[_newAddr] = updatedAssociation;
+
+        emit AssociationWalletAddrUpdated(_addr, _newAddr);
+    }
+
+    /// @notice Update association information if they want to change their postal address
+    /// @param _addr The wallet address of the association
+    /// @param _newPostalAddress The new postal address of the association
+    function updateAssociationPostalAddr(
+        address _addr,
+        string memory _newPostalAddress
+    ) external onlyOwner {
+        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(bytes(_newPostalAddress).length > 0, "Invalid postal address");
+
+        // Update the association's postal address
+        associations[_addr].postalAddress = _newPostalAddress;
+
+        emit AssociationUpdated(_addr, _newPostalAddress);
     }
 
     /// @notice Removes an association from the whitelist
@@ -174,32 +245,45 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @param _recipient The address to transfer the ether to
     /// @param _amount The amount of ether to transfer
     /// @param _purpose The purpose of the transfer
-    function transferFunds(
+     function transferFunds(
         address payable _recipient,
         uint256 _amount,
         string calldata _purpose
     ) external onlyAssociation nonReentrant {
-        // 5% commission on all withdrawals
+        // 5% commission on each transfer
         uint256 _commission = (_amount * 5) / 100;
-        // The amount after commission
+
         uint256 _amountAfterCommission = _amount - _commission;
+
         require(
             _amountAfterCommission + _commission <= address(this).balance,
-            "Contract balance is insufficient for transfer and commission"
+            "Le solde du contrat est insuffisant pour le transfert et la commission"
         );
-        require(_recipient != address(0), "Invalid recipient address");
-        // Ensure that the contract has enough balance to cover the commission
-        require(
-            _commission <= address(this).balance - _amountAfterCommission,
-            "Insufficient balance for commission"
-        );
+        require(_recipient != address(0), "Adresse du destinataire invalide");
 
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         _recipient.transfer(_amountAfterCommission);
-        msg.sender.transfer(_commission);
+
+        // Accumulation de la commission au lieu de la transférer immédiatement
+        accumulatedCommissions += _commission;
 
         emit FundsTransferred(_recipient, _amountAfterCommission, _purpose);
     }
+
+    /// @notice Owner can withdraw accumulated commissions
+    function withdrawCommissions() external onlyOwner {
+        uint256 amount = accumulatedCommissions;
+        require(amount > 0, "Aucune commission à retirer");
+
+        accumulatedCommissions = 0;
+        payable(owner()).transfer(amount);
+
+        emit CommissionsWithdrawn(amount);
+    }
+
+    // Assurez-vous de définir cet événement quelque part dans votre contrat
+    event CommissionsWithdrawn(uint256 amount);
+}
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
@@ -257,11 +341,11 @@ contract Donation is Ownable, ReentrancyGuard {
 
     /// @notice Retrieves the details of a specific association
     /// @param _association The address of the association
-    /// @return The name and whitelisted status of the association
+    /// @return The details of the association including name, postal address, RNA number, and whitelisted status
     function getAssociationDetails(
         address _association
-    ) external view returns (string memory, bool) {
+    ) external view returns (string memory, string memory, string memory, bool) {
         Association memory assoc = associations[_association];
-        return (assoc.name, assoc.whitelisted);
+        return (assoc.name, assoc.postalAddress, assoc.rnaNumber, assoc.whitelisted);
     }
 }
