@@ -7,12 +7,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // Security library to prevent reentrancy attacks
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+// Importing the DonationProofSBT contract to mint NFTs for donations
+import "./DonationProofSBT.sol";
+
 // considering adding a Pausable library in case of emergency ?
+// using access control or not ?
 
 /// @title Donation contract
 /// @author Ty Ha
 /// @notice You can use this contract for donating ether to the contract
 contract Donation is Ownable, ReentrancyGuard {
+    DonationProofSBT public sbtContract;
+
     /// @notice A struct to represent an association
     /// @param name The name of the association
     /// @param postalAddress The postal address of the association
@@ -41,7 +47,6 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice The total amount of amount donated to the contract
     uint256 private accumulatedCommissions;
 
-
     /// @notice A mapping of total donations made by each address
     mapping(address => uint256) public totalDonationsFromDonor;
     /// @notice A mapping of total withdrawals made by each address
@@ -58,19 +63,45 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice An array of whitelisted associations
     address[] public associationList;
 
-   
-
-    event AssociationAdded(address indexed association, string name, string postalAddress, string rnaNumber);
+    event AssociationAdded(
+        address indexed association,
+        string name,
+        string postalAddress,
+        string rnaNumber
+    );
     event AssociationRemoved(address indexed association);
-    event AssociationAddrUpdated(address indexed association, string postalAddress);
-    event AssociationWalletAddrUpdated(address indexed association, address newAddr);
+    event AssociationAddrUpdated(
+        address indexed association,
+        string postalAddress
+    );
+    event AssociationWalletAddrUpdated(
+        address indexed association,
+        address newAddr
+    );
+
+    event AssociationUpdated(address indexed association, string postalAddress);
     /// Efficient filtering for donations by either donor address, association address, or both.
+    /*
+    event DonationReceived(
+        address indexed donor,
+        uint256 amount,
+        address indexed association,
+        uint256 tokenId
+    );
+    */
     event DonationReceived(
         address indexed donor,
         uint256 amount,
         address indexed association
     );
-     /// @notice Events to log donation, funds transfer, and association changes
+    event SBTMinted(
+        address indexed donor,
+        uint256 amount,
+        address indexed association,
+        uint256 tokenId
+    );
+
+    /// @notice Events to log donation, funds transfer, and association changes
     event FundsTransferred(
         address indexed recipient,
         uint256 amountAfetrCommission,
@@ -79,7 +110,10 @@ contract Donation is Ownable, ReentrancyGuard {
     event CommissionsWithdrawn(uint256 amount);
 
     /// @dev Sets the original owner of the contract upon deployment
-    constructor() Ownable(msg.sender) {}
+    /// @param _sbtContractAddress The address of the DonationProofSBT contract
+    constructor(address _sbtContractAddress) Ownable(msg.sender) {
+        sbtContract = DonationProofSBT(_sbtContractAddress);
+    }
 
     // ::::::::::::: MODIFIERS ::::::::::::: //
 
@@ -99,14 +133,14 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @param _postalAddress The postal address of the association
     /// @param _rnaNumber The RNA number of the association
     function addAssociation(
-        address  _association,
+        address _association,
         string memory _name,
         string memory _postalAddress,
         string memory _rnaNumber
     ) external onlyOwner {
-        require( _association != address(0), "Invalid address");
+        require(_association != address(0), "Invalid address");
         require(
-            !associations[ _association].whitelisted,
+            !associations[_association].whitelisted,
             "Association already whitelisted"
         );
         require(bytes(_name).length > 0, "Association name cannot be empty");
@@ -115,17 +149,17 @@ contract Donation is Ownable, ReentrancyGuard {
             "Postal address cannot be empty"
         );
 
-        associations[ _association] = Association({
+        associations[_association] = Association({
             name: _name,
             postalAddress: _postalAddress,
             rnaNumber: _rnaNumber,
             balance: 0,
-            addr:  _association,
+            addr: _association,
             whitelisted: true,
             lastDeposit: block.timestamp
         });
 
-        associationId[ _association] = associationList.length;
+        associationId[_association] = associationList.length;
         associationList.push(_association);
 
         emit AssociationAdded(_association, _name, _postalAddress, _rnaNumber);
@@ -137,8 +171,7 @@ contract Donation is Ownable, ReentrancyGuard {
 
     function updateAssociationWalletAddr(
         address _addr,
-        address _newAddr,
-
+        address _newAddr
     ) external onlyOwner {
         require(associations[_addr].whitelisted, "Association not whitelisted");
         require(_newAddr != address(0), "Invalid address");
@@ -204,7 +237,53 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice Allows donors to donate ether to the contract
     /// @param _association The address of the association to donate to
     /// @param _amount The amount of ether to donate
+    /*
     function donateToAssociation(
+        address _association,
+        uint256 _amount
+    ) public payable {
+        require(_amount > 0, "Donation amount must be greater than zero");
+        require(
+            msg.value == _amount,
+            "Sent ether amount does not match specified amount"
+        );
+        require(
+            associations[_association].whitelisted,
+            "Association is not whitelisted"
+        );
+        require(
+            msg.sender != _association,
+            "Association cannot donate to itself"
+        );
+        require(address(sbtContract) != address(0), "SBT contract not set");
+
+        // Update association balance
+        DonationRecord memory newDonation = DonationRecord({
+            donor: msg.sender,
+            amount: _amount,
+            timestamp: block.timestamp
+        });
+        donationsByAssociation[_association].push(newDonation);
+
+        // Update the association's balance
+        associations[_association].balance += _amount;
+        associations[_association].lastDeposit = block.timestamp;
+
+        totalDonationsFromDonor[msg.sender] += _amount;
+        totalDonationsToAssociation[_association] += _amount;
+
+        // Mint SBT as proof of donation
+        uint256 _tokenId;
+        if (address(sbtContract) != address(0)) {
+            _tokenId = sbtContract.mint(msg.sender, _amount, _association);
+            emit SBTMinted(msg.sender, _amount, _association, _tokenId);
+        }
+
+        emit DonationReceived(msg.sender, _amount, _association, _tokenId);
+    }
+    */
+
+   function donateToAssociation(
         address _association,
         uint256 _amount
     ) public payable {
@@ -245,7 +324,7 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @param _recipient The address to transfer the ether to
     /// @param _amount The amount of ether to transfer
     /// @param _purpose The purpose of the transfer
-     function transferFunds(
+    function transferFunds(
         address payable _recipient,
         uint256 _amount,
         string calldata _purpose
@@ -257,9 +336,9 @@ contract Donation is Ownable, ReentrancyGuard {
 
         require(
             _amountAfterCommission + _commission <= address(this).balance,
-            "Le solde du contrat est insuffisant pour le transfert et la commission"
+            "Insufficient contract balance for transfer"
         );
-        require(_recipient != address(0), "Adresse du destinataire invalide");
+        require(_recipient != address(0), "Invalid recipient address");
 
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         _recipient.transfer(_amountAfterCommission);
@@ -273,7 +352,7 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @notice Owner can withdraw accumulated commissions
     function withdrawCommissions() external onlyOwner {
         uint256 amount = accumulatedCommissions;
-        require(amount > 0, "Aucune commission à retirer");
+        require(amount > 0, "No commissions to withdraw");
 
         accumulatedCommissions = 0;
         payable(owner()).transfer(amount);
@@ -281,11 +360,41 @@ contract Donation is Ownable, ReentrancyGuard {
         emit CommissionsWithdrawn(amount);
     }
 
-    // Assurez-vous de définir cet événement quelque part dans votre contrat
-    event CommissionsWithdrawn(uint256 amount);
-}
+    // ::::::::::::: SBT ::::::::::::: //
+
+    /// @notice Sets the address of the DonationProofSBT contract
+    /// @param _sbtContractAddress The address of the DonationProofSBT contract
+    function setSBTContract(address _sbtContractAddress) external onlyOwner {
+        sbtContract = DonationProofSBT(_sbtContractAddress);
+    }
 
     // ::::::::::::: GETTERS ::::::::::::: //
+    /// @notice Retrieves the donation proof for a specific token ID
+    /// @param tokenId The ID of the token
+    /// @return donor The address of the donor
+    /// @return amount The amount donated
+    /// @return association The address of the association
+    /// @return timestamp The timestamp of the donation
+    function getDonationProofDetails(
+        uint256 tokenId
+    )
+        external
+        view
+        returns (
+            address donor,
+            uint256 amount,
+            address association,
+            uint256 timestamp
+        )
+    {
+        require(address(sbtContract) != address(0), "SBT contract not set");
+        DonationProofSBT.DonationProof memory proof = sbtContract
+            .getDonationProof(tokenId);
+        donor = sbtContract.ownerOf(tokenId); // Assuming the SBT contract has an ownerOf function
+        amount = proof.amount;
+        association = proof.association;
+        timestamp = proof.timestamp;
+    }
 
     /// @notice Retrieves the total donations made by a specific donor
     /// @param _donor The address of the donor
@@ -297,7 +406,6 @@ contract Donation is Ownable, ReentrancyGuard {
     }
 
     /// @notice Retrieves the total withdrawals made by a specific address
-    /// @param _recipient The address of the recipient
     /// @return The total amount withdrawn by the specified address
     function getTotalWithdrawals(
         address _association
@@ -344,8 +452,17 @@ contract Donation is Ownable, ReentrancyGuard {
     /// @return The details of the association including name, postal address, RNA number, and whitelisted status
     function getAssociationDetails(
         address _association
-    ) external view returns (string memory, string memory, string memory, bool) {
+    )
+        external
+        view
+        returns (string memory, string memory, string memory, bool)
+    {
         Association memory assoc = associations[_association];
-        return (assoc.name, assoc.postalAddress, assoc.rnaNumber, assoc.whitelisted);
+        return (
+            assoc.name,
+            assoc.postalAddress,
+            assoc.rnaNumber,
+            assoc.whitelisted
+        );
     }
 }
