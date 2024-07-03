@@ -106,6 +106,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         uint256 timestamp,
         uint256 blockNumber
     );
+    event CommissionAccumulated(uint256 amount);
     event CommissionsWithdrawn(uint256 amount);
 
     /// @dev Sets the original owner of the contract upon deployment
@@ -175,18 +176,23 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         require(associations[_addr].whitelisted, "Association not whitelisted");
         require(_newAddr != address(0), "Invalid address");
 
-        // Update the association's address and name
-        associations[_addr].addr = _newAddr;
-
-        // Optionally, if you want to update the mapping key to the new address
-        // First, save the association data
+        // Save the association data
         Association memory updatedAssociation = associations[_addr];
         // Update the address in the struct
         updatedAssociation.addr = _newAddr;
+
         // Remove the old entry
         delete associations[_addr];
         // Add the updated association with the new address as the key
         associations[_newAddr] = updatedAssociation;
+
+        // Update associationList
+        uint256 index = associationId[_addr];
+        associationList[index] = _newAddr;
+
+        // Update associationId
+        delete associationId[_addr];
+        associationId[_newAddr] = index;
 
         emit AssociationWalletAddrUpdated(_addr, _newAddr);
     }
@@ -241,6 +247,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _association,
         uint256 _amount
     ) public payable nonReentrant whenNotPaused {
+       
         require(_amount > 0, "Donation amount must be greater than zero");
         require(
             msg.value == _amount,
@@ -315,8 +322,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         _recipient.transfer(_amountAfterCommission);
 
-        // Accumulation de la commission au lieu de la transférer immédiatement
         accumulatedCommissions += _commission;
+        emit CommissionAccumulated(_commission);
 
         emit FundsTransferred(
             _recipient,
@@ -394,10 +401,34 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         return totalWithdrawals[_association];
     }
 
+    /// @notice Retrieves the accumulated commissions
+    /// @return The total amount of accumulated commissions
+    function getAccumulatedCommissions() public view returns (uint256) {
+    return accumulatedCommissions;
+}
+
     /// @notice Retrieves the current balance of the contract
     /// @return The total balance of the contract
     function getContractBalance() external view returns (uint256) {
         return address(this).balance;
+    }
+
+    /// @notice Retrieves the balance of a specific association
+    /// @param _association The address of the association
+    /// @return The balance of the specified association
+    function getAssociationBalance(
+        address _association
+    ) public view returns (uint256) {
+        return associations[_association].balance;
+    }
+
+    /// @notice Retrieves the last deposit timestamp of a specific association
+    /// @param _association The address of the association
+    /// @return The timestamp of the last deposit made to the specified association
+    function getAssociationLastDeposit(
+        address _association
+    ) public view returns (uint256) {
+        return associations[_association].lastDeposit;
     }
 
     /// @notice Retrieves the total donations received by a specific association
