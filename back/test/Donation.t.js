@@ -842,5 +842,140 @@ describe("Donation", function () {
           )
       ).to.be.revertedWith("Insufficient contract balance for transfer");
     });
+
+    it("should not allow non-whitelisted address to transfer funds", async function () {
+      const { donation, asso2, recipient } = await loadFixture(
+        deployDonationFixture
+      );
+
+      const amount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+
+      await expect(
+        donation
+          .connect(asso2)
+          .transferFunds(recipient.address, amount, purpose)
+      ).to.be.revertedWith("You're not an association on our whitelist");
+    });
+
+    it("should not allow transfer if contract balance is insufficient", async function () {
+      const { donation, asso1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      const amount = ethers.parseEther("100"); // More than the contract balance
+      const purpose = "Test transfer";
+
+      await expect(
+        donation
+          .connect(asso1)
+          .transferFunds(recipient.address, amount, purpose)
+      ).to.be.revertedWith("Insufficient contract balance for transfer");
+    });
+
+    it("should not allow transfer to zero address", async function () {
+      const { donation, asso1, owner, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
+
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+
+      const transferAmount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+
+      // Now try to transfer to zero address
+      await expect(
+        donation
+          .connect(asso1)
+          .transferFunds(ethers.ZeroAddress, transferAmount, purpose)
+      ).to.be.revertedWith("Invalid recipient address");
+    });
+
+    it("should correctly calculate and accumulate commission", async function () {
+      const { donation, asso1, donor1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+
+      const amount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+
+      await donation
+        .connect(asso1)
+        .transferFunds(recipient.address, amount, purpose);
+
+      const commission = (amount * 5n) / 100n;
+      expect(await donation.getAccumulatedCommissions()).to.equal(commission);
+    });
+
+    it("should update totalWithdrawals correctly", async function () {
+      const { donation, donor1, asso1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+      const amount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+
+      await donation
+        .connect(asso1)
+        .transferFunds(recipient.address, amount, purpose);
+
+      const amountAfterCommission = (amount * 95n) / 100n;
+      expect(await donation.totalWithdrawals(asso1.address)).to.equal(
+        amountAfterCommission
+      );
+    });
+
+    it("should revert when paused", async function () {
+      const { donation, asso1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      const amount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+
+      await donation.connect(owner).pause();
+
+      await expect(
+        donation
+          .connect(asso1)
+          .transferFunds(recipient.address, amount, purpose)
+      ).to.be.revertedWithCustomError(donation, "EnforcedPause");
+    });
   });
 });
