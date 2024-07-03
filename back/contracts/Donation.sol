@@ -5,8 +5,8 @@ pragma solidity 0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Security library to prevent reentrancy attacks and pause the contract
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 // Importing the DonationProofSBT contract to mint NFTs for donations
 import "./DonationProofSBT.sol";
