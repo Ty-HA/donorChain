@@ -74,10 +74,11 @@ contract DonationProofSBT is
         _baseTokenURI = _newBaseURI;
     }
 
-    /// @notice Returns the base URI for the metadata
-    /// @return The base URI
-    function _baseURI() internal view override returns (string memory) {
-        return _baseTokenURI;
+    // Add this function to your DonationProofSBT.sol contract
+    /// @notice Gets the current base URI for the metadata
+    /// @return The current base URI
+    function getBaseURI() public view returns (string memory) {
+        return _baseURI();
     }
 
     /// @notice Mint a new token with the donation proof
@@ -90,7 +91,7 @@ contract DonationProofSBT is
         address _donor,
         uint256 _amount,
         address _association,
-        uint256 _blockNumber   
+        uint256 _blockNumber
     ) external onlyDonationContract nonReentrant returns (uint256) {
         emit MintAttempt(msg.sender, donationContract, _donor);
         uint256 tokenId = _tokenIdCounter++;
@@ -123,10 +124,13 @@ contract DonationProofSBT is
             _exists(_tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-        return
-            string(
-                abi.encodePacked(_baseURI(), _tokenId.toString())
-            );
+        return string(abi.encodePacked(_baseURI(), _tokenId.toString()));
+    }
+
+    /// @notice Returns the base URI for the metadata
+    /// @return The base URI
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
     }
 
     /// @notice Returns the donation proof for a given token ID
@@ -142,7 +146,9 @@ contract DonationProofSBT is
     /// @notice Returns all the tokens owned by the donor
     /// @param _donor The donor address
     /// @return An array of token IDs owned by the donor
-    function getDonorTokens(address _donor) external view returns (uint256[] memory) {
+    function getDonorTokens(
+        address _donor
+    ) external view returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(_donor);
         uint256[] memory tokensId = new uint256[](tokenCount);
         uint256 index = 0;
@@ -158,8 +164,8 @@ contract DonationProofSBT is
     /// @notice Burn a token
     function burn(uint256 _tokenId) external {
         require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
+        require(_exists(_tokenId), "Token does not exist");
         _burn(_tokenId);
-        delete donationProofs[_tokenId];
     }
 
     /// @notice Check if a token exists
