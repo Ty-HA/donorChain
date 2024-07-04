@@ -978,4 +978,1215 @@ describe("Donation", function () {
       ).to.be.revertedWithCustomError(donation, "EnforcedPause");
     });
   });
+
+  describe("withdrawCommission", function () {
+    it("should allow owner to withdraw accumulated commissions", async function () {
+      const { donation, owner, asso1, donor1, recipient } = await loadFixture(
+        deployDonationFixture
+      );
+
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+
+      // Make a transfer to accumulate some commissions
+      const transferAmount = ethers.parseEther("5");
+      await donation
+        .connect(asso1)
+        .transferFunds(recipient.address, transferAmount, "Test transfer");
+
+      // Calculate expected commission
+      const expectedCommission = (transferAmount * 5n) / 100n;
+
+      // Get owner's initial balance
+      const initialOwnerBalance = await ethers.provider.getBalance(
+        owner.address
+      );
+
+      // Withdraw commissions
+      const withdrawTx = await donation.connect(owner).withdrawCommissions();
+      const withdrawReceipt = await withdrawTx.wait();
+
+      // Calculate gas cost
+      const gasCost = withdrawReceipt.gasUsed * withdrawReceipt.gasPrice;
+
+      // Get owner's final balance
+      const finalOwnerBalance = await ethers.provider.getBalance(owner.address);
+
+      // Check that the owner's balance increased by the commission amount (minus gas costs)
+      expect(finalOwnerBalance - initialOwnerBalance + gasCost).to.equal(
+        expectedCommission
+      );
+
+      // Check that the event was emitted
+      expect(withdrawTx)
+        .to.emit(donation, "CommissionsWithdrawn")
+        .withArgs(expectedCommission);
+
+      // Try to withdraw again, should fail
+      await expect(
+        donation.connect(owner).withdrawCommissions()
+      ).to.be.revertedWith("No commissions to withdraw");
+    });
+
+    it("should not allow non-owner to withdraw commissions", async function () {
+      const { donation, asso1 } = await loadFixture(deployDonationFixture);
+
+      await expect(donation.connect(asso1).withdrawCommissions())
+        .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+        .withArgs(asso1.address);
+    });
+
+    it("should fail if there are no commissions to withdraw", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      await expect(
+        donation.connect(owner).withdrawCommissions()
+      ).to.be.revertedWith("No commissions to withdraw");
+    });
+
+    it("should revert when paused", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      await donation.connect(owner).pause();
+    });
+  });
+  describe("setSBTContract", function () {
+    it("should allow owner to set SBT contract address", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      const NewDonationProofSBT = await ethers.getContractFactory(
+        "DonationProofSBT"
+      );
+      const newSbt = await NewDonationProofSBT.deploy();
+
+      await expect(
+        donation.connect(owner).setSBTContract(await newSbt.getAddress())
+      ).to.not.be.reverted;
+
+      expect(await donation.sbtContract()).to.equal(await newSbt.getAddress());
+    });
+
+    it("should not allow non-owner to set SBT contract address", async function () {
+      const { donation, asso1 } = await loadFixture(deployDonationFixture);
+
+      const NewDonationProofSBT = await ethers.getContractFactory(
+        "DonationProofSBT"
+      );
+      const newSbt = await NewDonationProofSBT.deploy();
+
+      await expect(
+        donation.connect(asso1).setSBTContract(await newSbt.getAddress())
+      )
+        .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+        .withArgs(asso1.address);
+    });
+
+    it("should revert when trying to set zero address", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      await expect(
+        donation.connect(owner).setSBTContract(ethers.ZeroAddress)
+      ).to.be.revertedWith("Invalid SBT contract address");
+    });
+
+    it("should emit an event when SBT contract is set", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      const NewDonationProofSBT = await ethers.getContractFactory(
+        "DonationProofSBT"
+      );
+      const newSbt = await NewDonationProofSBT.deploy();
+
+      await expect(
+        donation.connect(owner).setSBTContract(await newSbt.getAddress())
+      )
+        .to.emit(donation, "SBTContractSet")
+        .withArgs(await newSbt.getAddress());
+    });
+  });
+  describe("getDonationProofDetails", function () {
+    let donation, sbt, owner, donor1, donor2, asso1;
+
+    beforeEach(async function () {
+      ({ donation, sbt, owner, donor1, donor2, asso1 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      // Whitelist the association before each test
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+    });
+
+    it("should retrieve correct donation proof details", async function () {
+      // Make a donation
+      const donationAmount = ethers.parseEther("1");
+      const tx = await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+      const receipt = await tx.wait();
+
+      // Find the DonationReceived event to get the tokenId
+      const event = receipt.logs.find(
+        (log) => log.fragment && log.fragment.name === "DonationReceived"
+      );
+      const tokenId = event.args.tokenId;
+
+      // Get the block of the donation
+      const block = await ethers.provider.getBlock(receipt.blockNumber);
+
+      // Retrieve donation proof details
+      const proofDetails = await donation.getDonationProofDetails(tokenId);
+
+      // Check each detail
+      expect(proofDetails[0]).to.equal(donor1.address); // donor
+      expect(proofDetails[1]).to.equal(donationAmount); // amount
+      expect(proofDetails[2]).to.equal(asso1.address); // association
+      expect(proofDetails[3]).to.equal(block.timestamp); // timestamp
+      expect(proofDetails[4]).to.equal(receipt.blockNumber); // blockNumber
+    });
+
+    it("should revert if SBT contract is not set", async function () {
+      // Deploy a new Donation contract with zero address for SBT
+      const Donation = await ethers.getContractFactory("Donation");
+      const newDonation = await Donation.deploy(ethers.ZeroAddress);
+
+      await expect(newDonation.getDonationProofDetails(1)).to.be.revertedWith(
+        "SBT contract not set"
+      );
+    });
+
+    it("should revert for non-existent token", async function () {
+      await expect(donation.getDonationProofDetails(999)).to.be.reverted;
+    });
+  });
+
+  function calculateWithdrawalAfterCommission(amount) {
+    const commission = (BigInt(amount) * BigInt(5)) / BigInt(100);
+    return BigInt(amount) - commission;
+  }
+
+  describe("getTotalDonationsFromOneDonor", function () {
+    let donation, sbt, owner, donor1, donor2, asso1, asso2;
+
+    beforeEach(async function () {
+      ({ donation, sbt, owner, donor1, donor2, asso1, asso2 } =
+        await loadFixture(deployDonationFixture));
+
+      // Whitelist the association before each test
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "123 Main St", "RNA123");
+    });
+
+    it("should return 0 for a donor who hasn't made any donations", async function () {
+      const totalDonations = await donation.getTotalDonationsFromOneDonor(
+        donor1.address
+      );
+      expect(totalDonations).to.equal(0);
+    });
+
+    it("should correctly return the total donations for a donor who made a single donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const totalDonations = await donation.getTotalDonationsFromOneDonor(
+        donor1.address
+      );
+      expect(totalDonations).to.equal(donationAmount);
+    });
+
+    it("should correctly return the total donations for a donor who made multiple donations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso2.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const totalDonations = await donation.getTotalDonationsFromOneDonor(
+        donor1.address
+      );
+      expect(totalDonations).to.equal(donationAmount1 + donationAmount2);
+    });
+
+    it("should correctly track donations from multiple donors", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso1.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const totalDonationsDonor1 = await donation.getTotalDonationsFromOneDonor(
+        donor1.address
+      );
+      const totalDonationsDonor2 = await donation.getTotalDonationsFromOneDonor(
+        donor2.address
+      );
+
+      expect(totalDonationsDonor1).to.equal(donationAmount1);
+      expect(totalDonationsDonor2).to.equal(donationAmount2);
+    });
+
+    it("should return 0 for an address that has never interacted with the contract", async function () {
+      const randomAddress = ethers.Wallet.createRandom().address;
+
+      const totalDonations = await donation.getTotalDonationsFromOneDonor(
+        randomAddress
+      );
+      expect(totalDonations).to.equal(0);
+    });
+  });
+
+  describe("getTotalWithdrawals", function () {
+    let donation, owner, donor1, asso1, asso2;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+
+      // Fund the contract
+      const donationAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso2.address, donationAmount, {
+          value: donationAmount,
+        });
+    });
+
+    it("should return 0 for an association that hasn't made any withdrawals", async function () {
+      const totalWithdrawals = await donation.getTotalWithdrawals(
+        asso1.address
+      );
+      expect(totalWithdrawals).to.equal(0);
+    });
+
+    it("should return 0 for an address that is not a whitelisted association", async function () {
+      const randomAddress = ethers.Wallet.createRandom().address;
+      const totalWithdrawals = await donation.getTotalWithdrawals(
+        randomAddress
+      );
+      expect(totalWithdrawals).to.equal(0);
+    });
+
+    it("should correctly return the total withdrawals for an association after a single withdrawal", async function () {
+      const withdrawalAmount = ethers.parseEther("1");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      const totalWithdrawals = await donation.getTotalWithdrawals(
+        asso1.address
+      );
+      expect(totalWithdrawals).to.equal(
+        calculateWithdrawalAfterCommission(withdrawalAmount)
+      );
+    });
+
+    it("should correctly return the total withdrawals for an association after multiple withdrawals", async function () {
+      const withdrawalAmount1 = ethers.parseEther("1");
+      const withdrawalAmount2 = ethers.parseEther("2");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
+
+      const totalWithdrawals = await donation.getTotalWithdrawals(
+        asso1.address
+      );
+      const expectedTotal =
+        calculateWithdrawalAfterCommission(withdrawalAmount1) +
+        calculateWithdrawalAfterCommission(withdrawalAmount2);
+      expect(totalWithdrawals).to.equal(expectedTotal);
+    });
+
+    it("should correctly track withdrawals from multiple associations", async function () {
+      const withdrawalAmount1 = ethers.parseEther("1");
+      const withdrawalAmount2 = ethers.parseEther("2");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount1, "Asso1 withdrawal");
+      await donation
+        .connect(asso2)
+        .transferFunds(asso2.address, withdrawalAmount2, "Asso2 withdrawal");
+
+      const totalWithdrawalsAsso1 = await donation.getTotalWithdrawals(
+        asso1.address
+      );
+      const totalWithdrawalsAsso2 = await donation.getTotalWithdrawals(
+        asso2.address
+      );
+
+      expect(totalWithdrawalsAsso1).to.equal(
+        calculateWithdrawalAfterCommission(withdrawalAmount1)
+      );
+      expect(totalWithdrawalsAsso2).to.equal(
+        calculateWithdrawalAfterCommission(withdrawalAmount2)
+      );
+    });
+
+    it("should correctly update total withdrawals after each withdrawal", async function () {
+      const withdrawalAmount1 = ethers.parseEther("1");
+      const withdrawalAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+      let totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
+      expect(totalWithdrawals).to.equal(
+        calculateWithdrawalAfterCommission(withdrawalAmount1)
+      );
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
+      totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
+      const expectedTotal =
+        calculateWithdrawalAfterCommission(withdrawalAmount1) +
+        calculateWithdrawalAfterCommission(withdrawalAmount2);
+      expect(totalWithdrawals).to.equal(expectedTotal);
+    });
+  });
+  describe("getAccumulatedCommissions", function () {
+    let donation, owner, donor1, asso1, asso2;
+    let calculateCommission;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      calculateCommission = function (amount) {
+        return (BigInt(amount) * BigInt(5)) / BigInt(100);
+      };
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+
+      // Fund the contract
+      const donationAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+    });
+
+    it("should return 0 when no withdrawals have been made", async function () {
+      const accumulatedCommissions = await donation.getAccumulatedCommissions();
+      expect(accumulatedCommissions).to.equal(0);
+    });
+
+    it("should correctly accumulate commission after a single withdrawal", async function () {
+      const withdrawalAmount = ethers.parseEther("1");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      const accumulatedCommissions = await donation.getAccumulatedCommissions();
+      const expectedCommission = calculateCommission(withdrawalAmount);
+      expect(accumulatedCommissions).to.equal(expectedCommission);
+    });
+
+    it("should correctly accumulate commissions after multiple withdrawals", async function () {
+      const withdrawalAmount1 = ethers.parseEther("1");
+      const withdrawalAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
+
+      const accumulatedCommissions = await donation.getAccumulatedCommissions();
+      const expectedCommission =
+        calculateCommission(withdrawalAmount1) +
+        calculateCommission(withdrawalAmount2);
+      expect(accumulatedCommissions).to.equal(expectedCommission);
+    });
+
+    it("should correctly accumulate commissions from multiple associations", async function () {
+      const donationAmount = ethers.parseEther("10");
+      const withdrawalAmount1 = ethers.parseEther("1");
+      const withdrawalAmount2 = ethers.parseEther("2");
+
+      // Donate to associations first
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso2.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount1, "Asso1 withdrawal");
+      await donation
+        .connect(asso2)
+        .transferFunds(asso2.address, withdrawalAmount2, "Asso2 withdrawal");
+
+      const accumulatedCommissions = await donation.getAccumulatedCommissions();
+      const expectedCommission =
+        calculateCommission(withdrawalAmount1) +
+        calculateCommission(withdrawalAmount2);
+      expect(accumulatedCommissions).to.equal(expectedCommission);
+    });
+
+    it("should reset to 0 after owner withdraws commissions", async function () {
+      const withdrawalAmount = ethers.parseEther("1");
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      // Owner withdraws commissions
+      await donation.connect(owner).withdrawCommissions();
+
+      const accumulatedCommissions = await donation.getAccumulatedCommissions();
+      expect(accumulatedCommissions).to.equal(0);
+    });
+  });
+
+  describe("getContractBalance", function () {
+    let donation, owner, donor1, donor2, asso1, asso2;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+    });
+
+    it("should return 0 when the contract is newly deployed", async function () {
+      const balance = await donation.getContractBalance();
+      expect(balance).to.equal(0);
+    });
+
+    it("should correctly reflect the balance after a single donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const balance = await donation.getContractBalance();
+      expect(balance).to.equal(donationAmount);
+    });
+
+    it("should correctly reflect the balance after multiple donations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso2.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const balance = await donation.getContractBalance();
+      expect(balance).to.equal(donationAmount1 + donationAmount2);
+    });
+
+    it("should correctly reflect the balance after donations and withdrawals", async function () {
+      const donationAmount = ethers.parseEther("10");
+      const withdrawalAmount = ethers.parseEther("1");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      const balance = await donation.getContractBalance();
+
+      // Calculate the expected balance
+      const commission = (withdrawalAmount * BigInt(5)) / BigInt(100);
+      const expectedBalance = donationAmount - withdrawalAmount + commission;
+
+      expect(balance).to.equal(expectedBalance);
+    });
+
+    it("should correctly reflect the balance after all funds are withdrawn", async function () {
+      const donationAmount = ethers.parseEther("10");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, donationAmount, "Withdraw all");
+
+      const balance = await donation.getContractBalance();
+      expect(balance).to.equal((donationAmount * BigInt(5)) / BigInt(100)); // Only commission should remain
+    });
+
+    it("should correctly reflect the balance after owner withdraws commissions", async function () {
+      const donationAmount = ethers.parseEther("10");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, donationAmount, "Withdraw all");
+
+      await donation.connect(owner).withdrawCommissions();
+
+      const balance = await donation.getContractBalance();
+      expect(balance).to.equal(0);
+    });
+  });
+
+  describe("getAssociationBalance", function () {
+    let donation, owner, donor1, donor2, asso1, asso2, nonAssociation;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      nonAssociation = ethers.Wallet.createRandom().address;
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+    });
+
+    it("should return 0 for a newly added association", async function () {
+      const balance = await donation.getAssociationBalance(asso1.address);
+      expect(balance).to.equal(0);
+    });
+
+    it("should return 0 for a non-whitelisted address", async function () {
+      const balance = await donation.getAssociationBalance(nonAssociation);
+      expect(balance).to.equal(0);
+    });
+
+    it("should correctly reflect the balance after a single donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const balance = await donation.getAssociationBalance(asso1.address);
+      expect(balance).to.equal(donationAmount);
+    });
+
+    it("should correctly reflect the balance after multiple donations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso1.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const balance = await donation.getAssociationBalance(asso1.address);
+      expect(balance).to.equal(donationAmount1 + donationAmount2);
+    });
+
+    it("should correctly reflect the balance after donations and withdrawals", async function () {
+      const donationAmount = ethers.parseEther("10");
+      const withdrawalAmount = ethers.parseEther("1");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      // Log the balance before withdrawal
+      console.log(
+        "Balance before withdrawal:",
+        await donation.getAssociationBalance(asso1.address)
+      );
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      // Log the balance after withdrawal
+      console.log(
+        "Balance after withdrawal:",
+        await donation.getAssociationBalance(asso1.address)
+      );
+
+      const balance = await donation.getAssociationBalance(asso1.address);
+      expect(balance).to.equal(donationAmount - withdrawalAmount);
+    });
+
+    it("should correctly reflect the balance after all funds are withdrawn", async function () {
+      const donationAmount = ethers.parseEther("10");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      // Log the balance before withdrawal
+      console.log(
+        "Balance before full withdrawal:",
+        await donation.getAssociationBalance(asso1.address)
+      );
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, donationAmount, "Withdraw all");
+
+      // Log the balance after withdrawal
+      console.log(
+        "Balance after full withdrawal:",
+        await donation.getAssociationBalance(asso1.address)
+      );
+
+      const balance = await donation.getAssociationBalance(asso1.address);
+      expect(balance).to.equal(0);
+    });
+
+    it("should not affect the balance of other associations", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const balanceAsso1 = await donation.getAssociationBalance(asso1.address);
+      const balanceAsso2 = await donation.getAssociationBalance(asso2.address);
+
+      expect(balanceAsso1).to.equal(donationAmount);
+      expect(balanceAsso2).to.equal(0);
+    });
+  });
+
+  describe("getAssociationLastDeposit", function () {
+    let donation, owner, donor1, asso1, asso2;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+    });
+
+    it("should update last deposit timestamp after a donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const lastDeposit = await donation.getAssociationLastDeposit(
+        asso1.address
+      );
+      expect(lastDeposit).to.be.above(0);
+    });
+
+    it("should return different timestamps for different associations", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      await ethers.provider.send("evm_increaseTime", [3600]); // increase time by 1 hour
+      await ethers.provider.send("evm_mine"); // mine a new block
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso2.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const lastDeposit1 = await donation.getAssociationLastDeposit(
+        asso1.address
+      );
+      const lastDeposit2 = await donation.getAssociationLastDeposit(
+        asso2.address
+      );
+
+      expect(lastDeposit2).to.be.above(lastDeposit1);
+    });
+
+    it("should not update last deposit timestamp after a withdrawal", async function () {
+      const donationAmount = ethers.parseEther("2");
+      const withdrawalAmount = ethers.parseEther("1");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const lastDepositBeforeWithdrawal =
+        await donation.getAssociationLastDeposit(asso1.address);
+
+      await ethers.provider.send("evm_increaseTime", [3600]); // increase time by 1 hour
+      await ethers.provider.send("evm_mine"); // mine a new block
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      const lastDepositAfterWithdrawal =
+        await donation.getAssociationLastDeposit(asso1.address);
+
+      expect(lastDepositAfterWithdrawal).to.equal(lastDepositBeforeWithdrawal);
+    });
+  });
+
+  describe("getTotalDonationsToAssociation", function () {
+    let donation, owner, donor1, donor2, asso1, asso2, nonAssociation;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      nonAssociation = ethers.Wallet.createRandom().address;
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+    });
+
+    it("should return 0 for a newly added association", async function () {
+      const totalDonations = await donation.getTotalDonationsToAssociation(
+        asso1.address
+      );
+      expect(totalDonations).to.equal(0);
+    });
+
+    it("should return 0 for a non-whitelisted address", async function () {
+      const totalDonations = await donation.getTotalDonationsToAssociation(
+        nonAssociation
+      );
+      expect(totalDonations).to.equal(0);
+    });
+
+    it("should correctly reflect the total after a single donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const totalDonations = await donation.getTotalDonationsToAssociation(
+        asso1.address
+      );
+      expect(totalDonations).to.equal(donationAmount);
+    });
+
+    it("should correctly reflect the total after multiple donations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso1.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const totalDonations = await donation.getTotalDonationsToAssociation(
+        asso1.address
+      );
+      // Utilisez l'addition standard pour les BigInt
+      expect(totalDonations).to.equal(
+        BigInt(donationAmount1) + BigInt(donationAmount2)
+      );
+    });
+
+    it("should track donations separately for different associations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso2.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const totalDonationsAsso1 = await donation.getTotalDonationsToAssociation(
+        asso1.address
+      );
+      const totalDonationsAsso2 = await donation.getTotalDonationsToAssociation(
+        asso2.address
+      );
+
+      expect(totalDonationsAsso1).to.equal(donationAmount1);
+      expect(totalDonationsAsso2).to.equal(donationAmount2);
+    });
+
+    it("should not be affected by withdrawals", async function () {
+      const donationAmount = ethers.parseEther("10");
+      const withdrawalAmount = ethers.parseEther("1");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const totalBeforeWithdrawal =
+        await donation.getTotalDonationsToAssociation(asso1.address);
+
+      await donation
+        .connect(asso1)
+        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+
+      const totalAfterWithdrawal =
+        await donation.getTotalDonationsToAssociation(asso1.address);
+
+      expect(totalAfterWithdrawal).to.equal(totalBeforeWithdrawal);
+    });
+  });
+
+  describe("getDonationsByAssociation", function () {
+    let donation, owner, donor1, donor2, asso1, asso2, nonAssociation;
+
+    beforeEach(async function () {
+      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      nonAssociation = ethers.Wallet.createRandom().address;
+
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+    });
+
+    it("should return an empty array for a newly added association", async function () {
+      const donations = await donation.getDonationsByAssociation(asso1.address);
+      expect(donations).to.be.an("array").that.is.empty;
+    });
+
+    it("should return an empty array for a non-whitelisted address", async function () {
+      const donations = await donation.getDonationsByAssociation(
+        nonAssociation
+      );
+      expect(donations).to.be.an("array").that.is.empty;
+    });
+
+    it("should correctly record a single donation", async function () {
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const donations = await donation.getDonationsByAssociation(asso1.address);
+      expect(donations).to.have.lengthOf(1);
+      expect(donations[0].donor).to.equal(donor1.address);
+      expect(donations[0].amount).to.equal(donationAmount);
+    });
+
+    it("should correctly record multiple donations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso1.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const donations = await donation.getDonationsByAssociation(asso1.address);
+      expect(donations).to.have.lengthOf(2);
+      expect(donations[0].donor).to.equal(donor1.address);
+      expect(donations[0].amount).to.equal(donationAmount1);
+      expect(donations[1].donor).to.equal(donor2.address);
+      expect(donations[1].amount).to.equal(donationAmount2);
+    });
+
+    it("should track donations separately for different associations", async function () {
+      const donationAmount1 = ethers.parseEther("1");
+      const donationAmount2 = ethers.parseEther("2");
+
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount1, {
+          value: donationAmount1,
+        });
+      await donation
+        .connect(donor2)
+        .donateToAssociation(asso2.address, donationAmount2, {
+          value: donationAmount2,
+        });
+
+      const donationsAsso1 = await donation.getDonationsByAssociation(
+        asso1.address
+      );
+      const donationsAsso2 = await donation.getDonationsByAssociation(
+        asso2.address
+      );
+
+      expect(donationsAsso1).to.have.lengthOf(1);
+      expect(donationsAsso1[0].donor).to.equal(donor1.address);
+      expect(donationsAsso1[0].amount).to.equal(donationAmount1);
+
+      expect(donationsAsso2).to.have.lengthOf(1);
+      expect(donationsAsso2[0].donor).to.equal(donor2.address);
+      expect(donationsAsso2[0].amount).to.equal(donationAmount2);
+    });
+
+    it("should include timestamp and block number in donation records", async function () {
+      const donationAmount = ethers.parseEther("1");
+      const tx = await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+      const receipt = await tx.wait();
+
+      const donations = await donation.getDonationsByAssociation(asso1.address);
+      expect(donations).to.have.lengthOf(1);
+
+      expect(donations[0].timestamp).to.be.a("bigint");
+      expect(donations[0].timestamp).to.be.above(0n);
+
+      expect(donations[0].blockNumber).to.be.a("bigint");
+      expect(donations[0].blockNumber).to.equal(BigInt(receipt.blockNumber));
+    });
+  });
+
+  describe("getWhitelistedAssociations", function () {
+    let donation, owner, asso1, asso2, nonAssociation;
+
+    beforeEach(async function () {
+        ({ donation, owner, asso1, asso2 } = await loadFixture(deployDonationFixture));
+
+        nonAssociation = ethers.Wallet.createRandom().address;
+
+        // Whitelist the associations
+        await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+        await donation.connect(owner).addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+        
+        // Supprimez toutes les associations avant chaque test pour avoir un état initial propre
+        const currentAssociations = await donation.getWhitelistedAssociations();
+        for (const association of currentAssociations) {
+            await donation.connect(owner).removeAssociation(association);
+        }
+    });
+  
+    it("should return an array containing all whitelisted associations", async function () {
+      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation.connect(owner).addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+
+      const whitelistedAssociations = await donation.getWhitelistedAssociations();
+      expect(whitelistedAssociations).to.include.members([asso1.address, asso2.address]);
+  });
+  
+    it("should not include non-whitelisted addresses in the returned array", async function () {
+      const whitelistedAssociations = await donation.getWhitelistedAssociations();
+      expect(whitelistedAssociations).to.not.include(nonAssociation);
+    });
+  
+    it("should return an empty array if no associations are whitelisted", async function () {
+      const whitelistedAssociations = await donation.getWhitelistedAssociations();
+      expect(whitelistedAssociations).to.be.an("array").that.is.empty;
+  });
+  });
+
+  describe("getAssociationDetails", function () {
+    let donation, owner, asso1, nonAssociation;
+
+    beforeEach(async function () {
+        ({ donation, owner, asso1 } = await loadFixture(deployDonationFixture));
+
+        nonAssociation = ethers.Wallet.createRandom().address;
+
+        // Whitelist the association
+        await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+    });
+
+    it("should return the details of a whitelisted association", async function () {
+        const details = await donation.getAssociationDetails(asso1.address);
+        expect(details[0]).to.equal("Asso1");
+        expect(details[1]).to.equal("123 Main St");
+        expect(details[2]).to.equal("RNA123");
+        expect(details[3]).to.be.true;
+    });
+
+    it("should return default values for a non-whitelisted association", async function () {
+        const details = await donation.getAssociationDetails(nonAssociation);
+        expect(details[0]).to.equal("");
+        expect(details[1]).to.equal("");
+        expect(details[2]).to.equal("");
+        expect(details[3]).to.be.false;
+    });
+});
+describe("Pause and Unpause", function () {
+  let donation, owner, asso1, donor1;
+
+  beforeEach(async function () {
+      ({ donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture));
+
+      // Whitelist the associations
+      await donation
+          .connect(owner)
+          .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  });
+
+  it("should allow the owner to pause the contract", async function () {
+      await donation.connect(owner).pause();
+      const paused = await donation.paused();
+      expect(paused).to.be.true;
+  });
+
+  it("should not allow a non-owner to pause the contract", async function () {
+      await expect(donation.connect(donor1).pause()).to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount").withArgs(donor1.address);
+  });
+
+  it("should allow the owner to unpause the contract", async function () {
+      await donation.connect(owner).pause();
+      await donation.connect(owner).unpause();
+      const paused = await donation.paused();
+      expect(paused).to.be.false;
+  });
+
+  it("should not allow a non-owner to unpause the contract", async function () {
+      await donation.connect(owner).pause();
+      await expect(donation.connect(donor1).unpause()).to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount").withArgs(donor1.address);
+  });
+
+  it("should not allow function calls protected by whenNotPaused when the contract is paused", async function () {
+      await donation.connect(owner).pause();
+      const donationAmount = ethers.parseEther("1");
+      await expect(donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount }))
+          .to.be.revertedWithCustomError(donation, "EnforcedPause");
+  });
+
+  it("should allow function calls protected by whenNotPaused when the contract is unpaused", async function () {
+      await donation.connect(owner).pause();
+      await donation.connect(owner).unpause();
+      const donationAmount = ethers.parseEther("1");
+      await expect(donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount }))
+          .to.not.be.reverted;
+  });
+});
 });

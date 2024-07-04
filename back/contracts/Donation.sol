@@ -108,6 +108,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     );
     event CommissionAccumulated(uint256 amount);
     event CommissionsWithdrawn(uint256 amount);
+    event SBTContractSet(address indexed sbtContract);
 
     /// @dev Sets the original owner of the contract upon deployment
     /// @param _sbtContractAddress The address of the DonationProofSBT contract
@@ -247,7 +248,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _association,
         uint256 _amount
     ) public payable nonReentrant whenNotPaused {
-       
         require(_amount > 0, "Donation amount must be greater than zero");
         require(
             msg.value == _amount,
@@ -320,7 +320,9 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         require(_recipient != address(0), "Invalid recipient address");
 
         totalWithdrawals[msg.sender] += _amountAfterCommission;
+        associations[msg.sender].balance -= _amount;
         _recipient.transfer(_amountAfterCommission);
+        
 
         accumulatedCommissions += _commission;
         emit CommissionAccumulated(_commission);
@@ -338,7 +340,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     function withdrawCommissions() external onlyOwner {
         uint256 amount = accumulatedCommissions;
         require(amount > 0, "No commissions to withdraw");
-
         accumulatedCommissions = 0;
         payable(owner()).transfer(amount);
 
@@ -350,7 +351,12 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @notice Sets the address of the DonationProofSBT contract
     /// @param _sbtContractAddress The address of the DonationProofSBT contract
     function setSBTContract(address _sbtContractAddress) external onlyOwner {
+        require(
+            _sbtContractAddress != address(0),
+            "Invalid SBT contract address"
+        );
         sbtContract = DonationProofSBT(_sbtContractAddress);
+        emit SBTContractSet(_sbtContractAddress);
     }
 
     // ::::::::::::: GETTERS ::::::::::::: //
@@ -361,6 +367,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @return amount The amount donated
     /// @return association The address of the association
     /// @return timestamp The timestamp of the donation
+    /// @return blockNumber The block number of the donation
     function getDonationProofDetails(
         uint256 tokenId
     )
@@ -404,8 +411,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @notice Retrieves the accumulated commissions
     /// @return The total amount of accumulated commissions
     function getAccumulatedCommissions() public view returns (uint256) {
-    return accumulatedCommissions;
-}
+        return accumulatedCommissions;
+    }
 
     /// @notice Retrieves the current balance of the contract
     /// @return The total balance of the contract
