@@ -51,19 +51,20 @@ export default function NavBar() {
           >
             Associations
           </Navbar.Link>
-          <Navbar.Link
-            href="#"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
-            About Us
-          </Navbar.Link>
+
           <Navbar.Link
             href="#contact"
             className="text-lg flex justify-left items-center text-black font-bold"
           >
             Contact
           </Navbar.Link>
-          
+          <Navbar.Link
+            href="/admin"
+            className="text-lg flex justify-left items-center text-green-500 font-bold"
+          >
+            ADMIN
+          </Navbar.Link>
+
           {/*<Navbar.Link href="/" onClick={(e) => e.preventDefault()}>
             <Dropdown
               label=""
