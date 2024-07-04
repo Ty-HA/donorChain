@@ -54,5 +54,16 @@ npx hardhat node
 npx hardhat run scripts/deploy.js --network localhost
 ```
 
+ 150 passing (12s)
+
+-----------------------|----------|----------|----------|----------|----------------|
+File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+-----------------------|----------|----------|----------|----------|----------------|
+ contracts\            |      100 |    92.86 |      100 |      100 |                |
+  Donation.sol         |      100 |    93.94 |      100 |      100 |                |
+  DonationProofSBT.sol |      100 |    88.89 |      100 |      100 |                |
+-----------------------|----------|----------|----------|----------|----------------|
+All files              |      100 |    92.86 |      100 |      100 |                |
+-----------------------|----------|----------|----------|----------|----------------|
 ### License
 DonorChain is open source and available under the MIT license.
