@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 
 // Importing the DonationProofSBT contract to mint NFTs for donations
 import "./DonationProofSBT.sol";
+import "./DonationBadgeNFT.sol";
 
 /*
  ____   ___  _   _  ___  ____   ____ _   _    _    ___ _   _ 
@@ -54,6 +55,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
 
     /// @notice The total amount of amount donated to the contract
     uint256 private accumulatedCommissions;
+    /// @notice The address of the DonationBadgeNFT contract
+    DonationBadgeNFT public badgeNFTContract;
 
     /// @notice A mapping of total donations made by each address
     mapping(address => uint256) public totalDonationsFromDonor;
@@ -67,6 +70,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     mapping(address => uint256) public totalDonationsToAssociation;
     /// @notice A mapping of donations made to each association
     mapping(address => DonationRecord[]) public donationsByAssociation;
+    /// @notice A mapping of donation tiers
+    mapping(uint256 => uint256) public donationTiers;
 
     /// @notice An array of whitelisted associations
     address[] public associationList;
@@ -287,6 +292,19 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             block.number
         );
 
+        // Check if the donor is eligible for a badge
+        uint256 totalDonated = totalDonationsFromDonor[msg.sender];
+
+        DonationBadgeNFT.Tier currentTier = badgeNFTContract
+            .getDonorHighestTier(msg.sender);
+        DonationBadgeNFT.Tier newTier = badgeNFTContract.getTierForAmount(
+            totalDonated
+        );
+
+        if (newTier > currentTier) {
+            badgeNFTContract.mintBadge(msg.sender, totalDonated);
+        }
+
         emit DonationReceived(
             msg.sender,
             _amount,
@@ -322,7 +340,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         associations[msg.sender].balance -= _amount;
         _recipient.transfer(_amountAfterCommission);
-        
 
         accumulatedCommissions += _commission;
         emit CommissionAccumulated(_commission);
@@ -346,7 +363,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         emit CommissionsWithdrawn(amount);
     }
 
-    // ::::::::::::: SBT ::::::::::::: //
+    // ::::::::::::: SETTER ::::::::::::: //
 
     /// @notice Sets the address of the DonationProofSBT contract
     /// @param _sbtContractAddress The address of the DonationProofSBT contract
@@ -357,6 +374,23 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         );
         sbtContract = DonationProofSBT(_sbtContractAddress);
         emit SBTContractSet(_sbtContractAddress);
+    }
+
+    function setBadgeNFTContract(address _badgeNFTContract) external onlyOwner {
+        badgeNFTContract = DonationBadgeNFT(_badgeNFTContract);
+    }
+
+    function setDonationTiers(
+        uint256[] memory amounts,
+        uint256[] memory tiers
+    ) external onlyOwner {
+        require(
+            amounts.length == tiers.length,
+            "Arrays must have the same length"
+        );
+        for (uint256 i = 0; i < amounts.length; i++) {
+            donationTiers[amounts[i]] = tiers[i];
+        }
     }
 
     // ::::::::::::: GETTERS ::::::::::::: //
@@ -483,6 +517,18 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             assoc.rnaNumber,
             assoc.whitelisted
         );
+    }
+
+    function checkDonationTier(
+        uint256 totalDonated
+    ) internal view returns (uint256) {
+        uint256 highestTier = 0;
+        for (uint256 i = 0; i <= totalDonated; i++) {
+            if (donationTiers[i] > highestTier) {
+                highestTier = donationTiers[i];
+            }
+        }
+        return highestTier;
     }
 
     // ::::::::::::: PAUSABLE  ::::::::::::: //
