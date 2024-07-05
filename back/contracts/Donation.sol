@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 // Importing the DonationProofSBT contract to mint NFTs for donations
-import { DonationProofSBT } from "./DonationProofSBT.sol";
-import { DonationBadgeNFT } from "./DonationBadgeNFT.sol";
+import {DonationProofSBT} from "./DonationProofSBT.sol";
+import {DonationBadgeNFT} from "./DonationBadgeNFT.sol";
 
 /*
  ____   ___  _   _  ___  ____   ____ _   _    _    ___ _   _ 
@@ -27,7 +27,6 @@ import { DonationBadgeNFT } from "./DonationBadgeNFT.sol";
 contract Donation is Ownable, ReentrancyGuard, Pausable {
     DonationProofSBT public sbtContract;
     DonationBadgeNFT public badgeContract;
-
 
     /// @notice A struct to represent an association
     /// @param name The name of the association
@@ -116,17 +115,27 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
 
     /// @dev Sets the original owner of the contract upon deployment
     /// @param _sbtContractAddress The address of the DonationProofSBT contract
-    constructor(address _sbtContractAddress) Ownable(msg.sender) {
+    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
+    constructor(
+        address _sbtContractAddress,
+        address _badgeContractAddress
+    ) Ownable(msg.sender) {
         sbtContract = DonationProofSBT(_sbtContractAddress);
+        badgeContract = DonationBadgeNFT(_badgeContractAddress);
     }
 
-    /// @notice Sets the address of the DonationBadgeNFT contract
+    /// @notice Sets the address of the DonationBadgeNFT contract to mint badges for donors as rewards for their donations
     /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
-    function setBadgeContract(address _badgeContractAddress) external onlyOwner {
-    require(_badgeContractAddress != address(0), "Invalid badge contract address");
-    badgeContract = DonationBadgeNFT(_badgeContractAddress);
-    emit BadgeContractSet(_badgeContractAddress);
-}
+    function setBadgeContract(
+        address _badgeContractAddress
+    ) external onlyOwner {
+        require(
+            _badgeContractAddress != address(0),
+            "Invalid badge contract address"
+        );
+        badgeContract = DonationBadgeNFT(_badgeContractAddress);
+        emit BadgeContractSet(_badgeContractAddress);
+    }
 
     // ::::::::::::: MODIFIERS ::::::::::::: //
 
@@ -299,6 +308,17 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             block.number
         );
 
+        // Check if the donor deserves a new badge
+        if (address(badgeContract) != address(0)) {
+            uint256 totalDonated = totalDonationsFromDonor[msg.sender];
+            try badgeContract.mintBadge(msg.sender, totalDonated) {
+                // Badge minted successfully
+            } catch {
+                // Badge minting failed, but we don't want to revert the donation
+                // You might want to emit an event here to log the failure
+            }
+        }
+
         emit DonationReceived(
             msg.sender,
             _amount,
@@ -334,7 +354,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         associations[msg.sender].balance -= _amount;
         _recipient.transfer(_amountAfterCommission);
-        
 
         accumulatedCommissions += _commission;
         emit CommissionAccumulated(_commission);

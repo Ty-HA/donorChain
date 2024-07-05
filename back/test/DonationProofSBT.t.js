@@ -19,9 +19,19 @@ describe("DonationProofSBT", function () {
     const sbtAddress = await sbt.getAddress();
     console.log("SBT contract deployed at:", sbtAddress);
 
+    // Deploy DonationProofSBT first
+    const DonationBadgeNFT = await ethers.getContractFactory(
+      "DonationBadgeNFT"
+    );
+    const badge = await DonationBadgeNFT.deploy();
+    await badge.waitForDeployment();
+
+    const badgeAddress = await badge.getAddress();
+    console.log("Badge NFT contract deployed at:", badgeAddress);
+
     // Now deploy Donation with the SBT contract address
     const Donation = await ethers.getContractFactory("Donation");
-    const donation = await Donation.deploy(sbtAddress);
+    const donation = await Donation.deploy(sbtAddress, badgeAddress);
     await donation.waitForDeployment();
 
     await donation
@@ -33,8 +43,9 @@ describe("DonationProofSBT", function () {
 
     // Set the Donation contract address in the SBT contract
     await sbt.setDonationContract(donationAddress);
+    await badge.setDonationContract(donationAddress);
 
-    return { donation, sbt, owner, asso1, donor1, donor2 };
+    return { donation, sbt, badge, owner, asso1, donor1, donor2 };
   }
 
   it("should deploy the DonationProofSBT contract successfully", async function () {

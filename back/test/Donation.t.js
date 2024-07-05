@@ -1,4 +1,5 @@
 const {
+  time,
   loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
@@ -32,7 +33,7 @@ describe("Donation", function () {
 
     // Now deploy Donation with the SBT contract address
     const Donation = await ethers.getContractFactory("Donation");
-    const donation = await Donation.deploy(sbtAddress);
+    const donation = await Donation.deploy(sbtAddress, badgeAddress);
     await donation.waitForDeployment();
 
     const donationAddress = await donation.getAddress();
@@ -790,7 +791,30 @@ describe("Donation", function () {
           })
       ).to.be.reverted;
     });
+    it("should mint badge when threshold is reached", async function () {
+      const { donation, asso1, donor1 } = await loadFixture(deployDonationFixture);
+
+      // Deploy and set DonationBadgeNFT
+      const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
+      const badgeNFT = await DonationBadgeNFT.deploy();
+      await badgeNFT.waitForDeployment();
+      await donation.setBadgeContract(await badgeNFT.getAddress());
+      await badgeNFT.setDonationContract(await donation.getAddress());
+
+      // Whitelist the association
+      await donation.addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
+      const donationAmount = ethers.parseEther("0.2"); // Above BRONZE_THRESHOLD
+
+      // Make the donation
+      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+
+      // Check badge minting
+      expect(await badgeNFT.balanceOf(donor1.address)).to.equal(1);
+      expect(await badgeNFT.getDonorHighestTier(donor1.address)).to.equal(1); // Bronze tier
   });
+  });
+
   describe("transferFunds", function () {
     it("should allow whitelisted association to transfer funds", async function () {
       const { donation, donor1, asso1, recipient, owner } = await loadFixture(
@@ -1232,7 +1256,7 @@ describe("Donation", function () {
     it("should revert if SBT contract is not set", async function () {
       // Deploy a new Donation contract with zero address for SBT
       const Donation = await ethers.getContractFactory("Donation");
-      const newDonation = await Donation.deploy(ethers.ZeroAddress);
+      const newDonation = await Donation.deploy(ethers.ZeroAddress, owner.address);
 
       await expect(newDonation.getDonationProofDetails(1)).to.be.revertedWith(
         "SBT contract not set"
