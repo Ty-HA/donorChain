@@ -17,7 +17,7 @@ const ButtonStart = () => {
 
 const FirstSection = () => {
   return (
-    <section className="flex sm:flex-row flex-col-reverse justify-around items-center pb-20 w-full bg-blue-800 pt-20">
+    <section className="flex sm:flex-row flex-col-reverse justify-around items-center pb-20 w-full bg-gradient-to-r from-blue-900 to-blue-500 pt-20">
       <div className="sm:w-1/2 xl:pl-60 lg:pl-32 px-8">
         <Image
           src="/logo.png"
@@ -51,24 +51,25 @@ const FirstSection = () => {
 
 const information = (title: string, paragraph: string, srcImage: string) => {
   return (
-    <div className="lg:w-1/4 px-2 min-h-7 flex flex-col">
-      <div className="flex flex-col items-center">
+    <div className="lg:w-1/4 px-8 min-h-7 flex flex-col">
+      <div className="flex flex-col justify-center items-center">
+        <div className="w-36 h-36 mb-4 border-2 rounded-full border-green-500 p-6">
         <Image
           src={srcImage}
           color="#ECAA00"
-          className="w-24 h-24 justify-center mb-4 border-2 rounded-full border-green-500"
           alt="Icon"
           width="500"
           height="500"
         />
+        </div>
         <h1
-          className="text-black xl:text-xl lg:text-l text-m font-semibold whitespace-normal
+          className="text-black md:text-2xl text-m font-semibold text-center
       "
         >
           {title}
         </h1>
       </div>
-      <p className="text-gray-500 whitespace-normal mt-4 mb-8 xl:text-l text-m  text-center">
+      <p className="text-gray-700 mt-2 mb-8 xl:text-l text-m  text-center">
         {paragraph}
       </p>
     </div>
@@ -92,7 +93,7 @@ const explication = (
           direction ? "xl:pl-60 lg:pl-32 sm:pl-8" : "xl:pr-60 lg:pr-32 sm:pr-8"
         }`}
       >
-        <Image src={srcImage} alt="Pet" width="400" height="500" />
+        <Image src={srcImage} alt="Pet" width="400" height="500" className="p-2"/>
       </div>
       <div
         className={`sm:w-1/2 px-4 ${
@@ -121,7 +122,7 @@ const App = () => {
       <div id="projects" className="flex flex-col items-center w-full bg-white">
         <Projects />
       </div>
-      <div id="projects" className="flex flex-col items-center w-full bg-blue-800 mt-10">
+      <div id="projects" className="flex flex-col items-center w-full bg-gradient-to-r from-blue-900 to-blue-500 mt-10">
         <TotalDonations />
       </div>
       <div className="bg-white mb-8">
@@ -129,15 +130,16 @@ const App = () => {
           {information(
             "Healthcare",
             "To provide better care",
-            "/icons/book-medical.png"
+            "/icons/protection.png"
           )}
           {information(
-            "A Community",
-            "Worldwide community",
-            "/icons/people-community.png"
+            "Community",
+            "Worldwide",
+            "/icons/social-justice.png"
           )}
-          {information("Innovation", "Blockchain technology", "/icons/bc.png")}
-          {information("Transparent", "Description", "/icons/donation.png")}
+          {information("Innovation", "Blockchain technology", "/icons/blockchain.png")}
+
+          {information("Transparent", "Tracable", "/icons/analytic.png")}
         </section>
       </div>
       <Contact />
