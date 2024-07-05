@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import { Button, Label, Textarea, TextInput, Card } from "flowbite-react";
+import { Button, Label, Textarea, TextInput } from "flowbite-react";
 import { HiMail } from "react-icons/hi";
 
 export default function Contact() {
@@ -13,11 +13,11 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="w-screen h-screen flex flex-col items-center justify-center text-center z-0 bg-blue-400"
+      className="w-screen h-[75vh] flex flex-col items-center justify-center text-center z-0 bg-blue-400"
     >
-      <Card className="md:h-[70vh] h-[60vh] rounded-3xl w-full md:w-1/2 animate-fade-in">
-        <div className="flex flex-col justify-around w-full px-4">
-          <h2 className="text-blue-700 text-2xl font-bold md:text-4xl mb-4">
+      <div className="md:h-[70vh] h-[75vh] rounded-3xl md:w-1/3 animate-fade-in w-full">
+        <div className="flex flex-col justify-center px-4">
+          <h2 className="text-white text-2xl font-bold md:text-4xl mt-10">
             Contact Us
           </h2>
           <form
@@ -75,7 +75,7 @@ export default function Contact() {
             </Button>
           </form>
         </div>
-      </Card>
+      </div>
     </section>
   );
 }

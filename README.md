@@ -12,6 +12,9 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 - **Direct Funding**: Donations go directly to the chosen associations, minimizing overhead costs.
 - **User-Friendly Interface**: A simple and intuitive interface built with Next.js makes it easy for anyone to donate.
 - **Secure Transactions**: Utilizes Ethereum blockchain for secure and immutable transactions.
+- **Rewarding**: Donors receive rewards for their contributions, incentivizing continued support for the causes they care about.
+- **Admin dashboard**: An administrative dashboard allows authorized admin to manage and monitor the platform effectively.
+
 
 ## Stack
 
@@ -24,6 +27,7 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 
 - **Next.js**: React framework for building the user interface, providing server-side rendering for faster load times and better SEO.
 - **Vercel**: Deployment and hosting platform, offering automatic scaling and a global CDN.
+- **Contact**: Using web3form for contact section.
 
 ## Getting Started
 
@@ -40,7 +44,7 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
    
    ```bash
    git clone <repository-url>
-   cd DonorChain
+   cd DonorChain/front
    npm install
    npm run dev
    ```
@@ -49,9 +53,21 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 - BACK
 
 ```
+cd DonorChain/back
 npx hardhat compile
 npx hardhat node
 npx hardhat run scripts/deploy.js --network localhost
+```
+
+## Smart contracts
+
+### Units tests
+How to running test
+```
+cd DonorChain/back
+npx hardhat compile
+npx hardhat test
+npx hardhat coverage
 ```
 
  150 passing (12s)
@@ -67,3 +83,12 @@ All files              |      100 |    92.86 |      100 |      100 |            
 -----------------------|----------|----------|----------|----------|----------------|
 ### License
 DonorChain is open source and available under the MIT license.
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+### Disclaimer
+This Decentralized Application (DApp) was developed as part of a school project. It is deployed on the Arbitrum Sepolia testnet. The authors are not responsible for any losses or damages resulting from the use of this application.
