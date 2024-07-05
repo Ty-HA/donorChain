@@ -3,11 +3,9 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract DonationBadgeNFT is ERC721, Ownable {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    uint256 private _nextTokenId;
 
     address public donationContract;
 
@@ -32,11 +30,7 @@ contract DonationBadgeNFT is ERC721, Ownable {
     uint256 public constant SILVER_THRESHOLD = 0.5 ether;
     uint256 public constant GOLD_THRESHOLD = 1 ether;
 
-    event BadgeMinted(
-        address indexed donor,
-        uint256 indexed tokenId,
-        Tier tier
-    );
+    event BadgeMinted(address indexed donor, uint256 indexed tokenId, Tier tier);
     event TierURIUpdated(Tier indexed tier, string newURI);
 
     constructor() ERC721("DonationBadge", "DBADGE") Ownable(msg.sender) {
@@ -46,10 +40,7 @@ contract DonationBadgeNFT is ERC721, Ownable {
     }
 
     modifier onlyDonationContract() {
-        require(
-            msg.sender == donationContract,
-            "Caller is not the Donation contract"
-        );
+        require(msg.sender == donationContract, "Caller is not the Donation contract");
         _;
     }
 
@@ -57,19 +48,11 @@ contract DonationBadgeNFT is ERC721, Ownable {
         donationContract = _donationContract;
     }
 
-    function mintBadge(
-        address donor,
-        uint256 totalDonated
-    ) external onlyDonationContract returns (uint256) {
+    function mintBadge(address donor, uint256 totalDonated) external onlyDonationContract returns (uint256) {
         Tier newTier = getTierForAmount(totalDonated);
-        require(
-            newTier > donorHighestTier[donor],
-            "Donor already has this tier or higher"
-        );
+        require(newTier > donorHighestTier[donor], "Donor already has this tier or higher");
 
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
-
+        uint256 newTokenId = _nextTokenId++;
         _safeMint(donor, newTokenId);
         badges[newTokenId] = Badge(newTier, block.timestamp);
         donorHighestTier[donor] = newTier;
@@ -79,13 +62,8 @@ contract DonationBadgeNFT is ERC721, Ownable {
         return newTokenId;
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view override returns (string memory) {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         return tierURIs[badges[tokenId].tier];
     }
 
@@ -109,13 +87,11 @@ contract DonationBadgeNFT is ERC721, Ownable {
         }
     }
 
-    function getDonerBadges(
-        address donor
-    ) external view returns (uint256[] memory) {
+    function getDonorBadges(address donor) external view returns (uint256[] memory) {
         uint256 balance = balanceOf(donor);
         uint256[] memory tokenIds = new uint256[](balance);
         uint256 counter = 0;
-        for (uint256 i = 1; i <= _tokenIds.current(); i++) {
+        for (uint256 i = 0; i < _nextTokenId; i++) {
             if (_exists(i) && ownerOf(i) == donor) {
                 tokenIds[counter] = i;
                 counter++;
@@ -124,9 +100,7 @@ contract DonationBadgeNFT is ERC721, Ownable {
         return tokenIds;
     }
 
-    function getBadgeDetails(
-        uint256 tokenId
-    ) external view returns (Tier tier, uint256 timestamp) {
+    function getBadgeDetails(uint256 tokenId) external view returns (Tier tier, uint256 timestamp) {
         require(_exists(tokenId), "Badge does not exist");
         Badge memory badge = badges[tokenId];
         return (badge.tier, badge.timestamp);
@@ -141,5 +115,9 @@ contract DonationBadgeNFT is ERC721, Ownable {
         if (tier == Tier.Silver) return "Silver";
         if (tier == Tier.Bronze) return "Bronze";
         return "None";
+    }
+
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        return tokenId < _nextTokenId && tokenId != 0;
     }
 }
