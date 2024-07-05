@@ -123,6 +123,13 @@ contract DonationBadgeNFT is ERC721, Ownable {
         return tokenIds;
     }
 
+    /// @notice Check if a badge exists
+    /// @param _tokenId  The token ID of the badge
+    /// @return A boolean indicating if the badge exists
+    function _exists(uint256 _tokenId) internal view returns (bool) {
+        return _tokenId < _nextTokenId;
+    }
+
     /// @notice Get the details of a badge
     /// @param _tokenId  The token ID of the badge
     function getBadgeDetails(uint256 _tokenId) external view returns (Tier tier, uint256 timestamp) {
@@ -148,7 +155,5 @@ contract DonationBadgeNFT is ERC721, Ownable {
         return "None";
     }
 
-    function _exists(uint256 _tokenId) internal view returns (bool) {
-        return _tokenId < _nextTokenId && _tokenId != 0;
-    }
+    
 }
