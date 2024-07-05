@@ -122,6 +122,11 @@ const DonationTimeline: React.FC = () => {
                   setHoveredDonationId(null);
                 }}
               >
+                {isHovered && (
+                  <span className="text-white text-md font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+                    {donation.amount.toFixed(2)} eth
+                  </span>
+                )}
                 {hoveredDonation === donation && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-white p-2 rounded shadow-md text-xs z-10 w-40 text-center whitespace-nowrap">
                     <div className="font-bol text-black">
@@ -154,7 +159,7 @@ const DonationTimeline: React.FC = () => {
 
         {/* Selected donation details */}
         {selectedDonation && (
-          <div className="mt-16 p-4 bg-white rounded-lg relative w-1/3 mx-auto ">
+          <div className="mt-16 p-4 bg-white rounded-lg relative md:w-1/3 mx-auto w-full">
             <button
               onClick={() => setSelectedDonation(null)}
               className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"

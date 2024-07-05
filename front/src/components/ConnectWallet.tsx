@@ -8,11 +8,14 @@ const ConnectWallet = () => {
   return (
     <div className="flex justify-center">
       {isConnected ? (
-        <p>Connected with {address}</p>
+        // Utilisez text-sm pour les petits écrans et text-base pour les tailles supérieures
+        <p className="text-sm sm:text-base">Connected with {address}</p>
       ) : (
-        <p>Please connect your Wallet.</p>
+        // Utilisez text-sm pour les petits écrans et text-base pour les tailles supérieures
+        <p className="text-sm sm:text-base"></p>
       )}
       <ConnectButton
+      
         label="Connect your wallet"
         accountStatus={{
           smallScreen: "avatar",

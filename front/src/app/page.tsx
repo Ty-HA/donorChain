@@ -8,7 +8,7 @@ const ButtonStart = () => {
   return (
     <a
       href="#projects"
-      className="bg-[#92CD00] hover:bg-[#5aa73b] active:bg-[#92CD00] text-white sm:px-12 px-4 mt-8 py-3 sm:py-1.5 md:py-4 text-lg font-semibold rounded-full whitespace-nowrap"
+      className="bg-[#4fd92c] hover:bg-[#3ed185] hover:text-blue-700 active:bg-[#4fd92c] text-white sm:px-12 px-4 mt-8 py-3 sm:py-1.5 md:py-4 text-lg font-semibold rounded-full whitespace-nowrap animate-slide-in-up"
     >
       DONATE NOW →
     </a>
@@ -18,7 +18,8 @@ const ButtonStart = () => {
 const FirstSection = () => {
   return (
     <section className="flex sm:flex-row flex-col-reverse justify-around items-center pb-20 w-full bg-gradient-to-r from-blue-900 to-blue-500 pt-20">
-      <div className="sm:w-1/2 xl:pl-60 lg:pl-32 px-8">
+     
+      <div className="sm:w-1/2 xl:pl-60 lg:pl-32 px-8 pt-6">
         <Image
           src="/logo.png"
           alt="DonorChain logo"
@@ -29,14 +30,14 @@ const FirstSection = () => {
 
         <h2
           style={{ lineHeight: "1.2" }}
-          className="text-white mt-6 xl:text-5xl lg:text-3xl text-2xl font-semibold mb-12 leading-loose"
+          className="text-white mt-6 xl:text-5xl lg:text-3xl text-2xl font-semibold mb-12 leading-loose animate-slide-in-up"
         >
           Transparency in every donation, powered by blockchain technology
         </h2>
 
         <ButtonStart />
       </div>
-      <div className="sm:w-1/2 xl:pr-60 lg:pr-32 px-8">
+      <div className="sm:w-1/2 xl:pr-60 lg:pr-32 px-8 animate-slide-in-right">
         <Image
           src="/images/home.png"
           alt="home image"

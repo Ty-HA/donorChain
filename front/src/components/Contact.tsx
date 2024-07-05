@@ -1,72 +1,81 @@
 "use client";
-import React from "react";
-import { Button, Label, Textarea, TextInput } from "flowbite-react";
+import React, { useEffect } from "react";
+import { Button, Label, Textarea, TextInput, Card } from "flowbite-react";
 import { HiMail } from "react-icons/hi";
 
 export default function Contact() {
+  useEffect(() => {
+    // Réinitialise le formulaire au chargement de la page
+    const formElement = document.getElementById("form") as HTMLFormElement;
+    formElement?.reset();
+  }, []);
+
   return (
     <section
       id="contact"
       className="w-screen h-screen flex flex-col items-center justify-center text-center z-0 bg-blue-400"
     >
-      <div className="py-8 lg:py-16 px-4 mx-auto max-w-screen-md mb-8 mt-24 lg:mt-10 se:mt-24 se:mb-24">
-        <div className="mb-8">
-          <h2 className="text-black text-green text-2xl font-bold md:text-4xl animate-fade-in">
-          Stay tuned!
+      <Card className="md:h-[70vh] h-[60vh] rounded-3xl w-full md:w-1/2 animate-fade-in">
+        <div className="flex flex-col justify-around w-full px-4">
+          <h2 className="text-blue-700 text-2xl font-bold md:text-4xl mb-4">
+            Contact Us
           </h2>
-          <p className="mt-4 lg:mb-8 text-center text-base text-black dark:text-white sm:text-xl">
-            Do not hesitate to contact us for any question
-          </p>
+          <form
+            id="form"
+            action="https://api.web3forms.com/submit"
+            method="POST"
+          >
+            <input
+              type="hidden"
+              name="access_key"
+              value={process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY}
+            />
+            <div className="text-left mb-2">
+              <Label htmlFor="name" className="">Name</Label>
+              <TextInput
+                type="text"
+                name="name"
+                required
+                placeholder="Your name"
+                
+              />
+            </div>
+            <div className="text-left mb-2">
+              <Label htmlFor="email">Email</Label>
+              <TextInput
+                type="email"
+                name="email"
+                required
+                placeholder="email@example.com"
+               
+              />
+            </div>
+            <div className="text-left mb-2">
+              <Label htmlFor="message">Message</Label>
+              <Textarea
+                name="message"
+                required
+                placeholder="Enter your message"
+                rows={10}
+                
+              ></Textarea>
+            </div>
+            <input
+              className="bg-[#4fd92c] hover:bg-[#c48200] active:bg-[#4fd92c] text-lg text-white mt-8 py-2 px-4 rounded-xl mx-auto"
+              type="hidden"
+              name="redirect"
+              value="https://web3forms.com/success"
+            />
+            <Button
+              size="md"
+              className="bg-[#4fd92c] hover:bg-[#c48200] active:bg-[#4fd92c] text-white mt-8 py-2 px-4 rounded-xl mx-auto"
+              type="submit"
+            >
+              Send Message
+            </Button>
+          </form>
         </div>
-        <form className="space-y-6">
-          <div>
-            <Label
-              htmlFor="email4"
-              className="block mb-2 text-md text-black dark:text-green text-left"
-            >
-              Your email
-            </Label>
-            <TextInput
-              id="email4"
-              type="email"
-              icon={HiMail}
-              placeholder="Email"
-              required
-            />
-          </div>
-          <div>
-            <Label
-              htmlFor="subject"
-              className="block mb-2 text-md text-black dark:text-green text-left"
-            >
-              Subject
-            </Label>
-            <TextInput
-              id="subject"
-              placeholder="Subject"
-              required
-              color="gray"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label
-              htmlFor="message"
-              className="block mb-2 text-md text-black dark:text-green text-left"
-            >
-              Your message
-            </Label>
-            <Textarea
-              id="message"
-              placeholder="Your message..."
-              required
-              rows={8}
-            />
-          </div>
-          <Button className="bg-green-500 text-white hover:bg-green-700" type="submit">
-            Send message
-          </Button>
-        </form>
-      </div>
+      </Card>
     </section>
   );
 }

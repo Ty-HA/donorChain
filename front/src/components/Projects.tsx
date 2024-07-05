@@ -80,121 +80,6 @@ const allDonations: Donation[] = [
   },
 ];
 
-// Créez un composant pour afficher le résumé des donations
-const DonationSummary = () => {
-  const [showAllDonations, setShowAllDonations] = useState(false);
-  const totalDonations = allDonations.reduce(
-    (sum, donation) => sum + donation.amount,
-    0
-  );
-
-  return (
-    <div className="text-black shadow-md rounded-lg p-6 my-6">
-      <h2 className="text-2xl font-bold mb-4">Résumé des Donations</h2>
-      <p className="text-xl mb-4">Total des donations: {totalDonations} ETH</p>
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => setShowAllDonations(!showAllDonations)}
-      >
-        {showAllDonations ? "Masquer les détails" : "Voir toutes les donations"}
-      </button>
-      {showAllDonations && (
-        <ul className="mt-4">
-          {allDonations.map((donation) => (
-            <li key={donation.id} className="mb-2">
-              {donation.amount} ETH pour {donation.project} le {donation.date}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-const DonationTimeline = () => {
-  const [selectedDonation, setSelectedDonation] = useState<Donation | null>(
-    null
-  );
-  const totalDonations = allDonations.reduce(
-    (sum, donation) => sum + donation.amount,
-    0
-  );
-
-  // Fonction pour calculer la taille de la bulle en fonction du montant
-  const getBubbleSize = (amount: number) => {
-    const minSize = 30;
-    const maxSize = 80;
-    const size = minSize + (amount / 15) * (maxSize - minSize); // 15 est le montant max dans cet exemple
-    return Math.min(Math.max(size, minSize), maxSize);
-  };
-
-  return (
-    <div className="bg-gray-400 shadow-md rounded-lg p-6 my-6 px-60">
-      <h2 className="text-2xl font-bold mb-4">
-        Total des donations: {totalDonations} ETH
-      </h2>
-      <div className="relative h-[200px] border-b-2 border-gray-300">
-        {allDonations.map((donation, index) => {
-          const bubbleSize = getBubbleSize(donation.amount);
-          return (
-            <div
-              key={donation.id}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 hover:scale-110"
-              style={{
-                left: `${(index / (allDonations.length - 1)) * 100}%`,
-                bottom: "0",
-              }}
-              onClick={() => setSelectedDonation(donation)}
-            >
-              <div
-                className="rounded-full bg-blue-500 flex items-center justify-center text-white font-bold"
-                style={{
-                  width: `${bubbleSize}px`,
-                  height: `${bubbleSize}px`,
-                }}
-              >
-                {donation.amount} ETH
-              </div>
-              <div className="mt-2 text-xs text-center">{donation.date}</div>
-            </div>
-          );
-        })}
-      </div>
-      {selectedDonation && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg relative">
-          <button
-            onClick={() => setSelectedDonation(null)}
-            className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-          <h3 className="font-bold text-black">{selectedDonation.project}</h3>
-          <p className="font-bold text-black">
-            Montant: {selectedDonation.amount} ETH
-          </p>
-          <p className="font-bold text-black">Date: {selectedDonation.date}</p>
-          <p className="font-bold text-black">
-            Donor: {selectedDonation.contributors}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Projects = () => {
   const [selectedContributor, setSelectedContributor] =
     useState<Contributor | null>(null);
@@ -215,7 +100,7 @@ const Projects = () => {
         Your help is Needed
       </h2>
 
-      <section className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2 pt-12 sm:px-32 px-4 w-full">
+      <section className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2 pt-10 sm:px-32 px-4 w-full">
         <div className="flex flex-col">
           <Card
             imgSrc="/images/card1.png"
@@ -289,7 +174,7 @@ const Projects = () => {
               Total raised: 10ETH ($31223,55)
             </div>
             <div className="grid grid-cols-2 gap-2 w-full">
-              <Button className="bg-green-500 text-white hover:bg-green-700 font-bold">
+              <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold">
                 Donate now
               </Button>
               <Button className="bg-yellow-400 text-white hover:bg-green-700 font-bold">
@@ -398,7 +283,7 @@ const Projects = () => {
               Total raised: 10ETH ($31223,55)
             </div>
             <div className="grid grid-cols-2 gap-2 w-full">
-              <Button className="bg-green-500 text-white hover:bg-green-700 font-bold">
+              <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold">
                 Donate now
               </Button>
               <Button className="bg-yellow-400 text-white hover:bg-green-700 font-bold">
@@ -508,7 +393,7 @@ const Projects = () => {
               Total raised: 10ETH ($31223,55)
             </div>
             <div className="grid grid-cols-2 gap-2 w-full">
-              <Button className="bg-green-500 text-white hover:bg-green-700 font-bold">
+              <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold">
                 Donate now
               </Button>
               <Button className="bg-yellow-400 text-white hover:bg-green-700 font-bold">
