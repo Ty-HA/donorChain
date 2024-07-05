@@ -20,6 +20,16 @@ describe("Donation", function () {
     const sbtAddress = await sbt.getAddress();
     console.log("SBT contract deployed at:", sbtAddress);
 
+    // Deploy DonationBadgeNFT first
+    const DonationBadgeNFT = await ethers.getContractFactory(
+      "DonationBadgeNFT"
+    );
+    const badge = await DonationBadgeNFT.deploy();
+    await badge.waitForDeployment();
+
+    const badgeAddress = await badge.getAddress();
+    console.log("NFT Badge contract deployed at:", badgeAddress);
+
     // Now deploy Donation with the SBT contract address
     const Donation = await ethers.getContractFactory("Donation");
     const donation = await Donation.deploy(sbtAddress);
@@ -30,10 +40,12 @@ describe("Donation", function () {
 
     // Set the Donation contract address in the SBT contract
     await sbt.setDonationContract(donationAddress);
+    await badge.setDonationContract(donationAddress);
 
     return {
       donation,
       sbt,
+      badge,
       owner,
       asso1,
       asso2,
@@ -43,6 +55,68 @@ describe("Donation", function () {
       recipient,
     };
   }
+
+    describe("setBadgeContract", function () {
+      it("should set the badge contract address correctly", async function () {
+        const { donation, owner } = await loadFixture(deployDonationFixture);
+  
+        // Deploy DonationBadgeNFT
+        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
+        const badgeNFT = await DonationBadgeNFT.deploy();
+        await badgeNFT.waitForDeployment();
+  
+        const badgeNFTAddress = await badgeNFT.getAddress();
+  
+        // Set the badge contract
+        await donation.connect(owner).setBadgeContract(badgeNFTAddress);
+  
+        // Check if the badge contract was set correctly
+        const setBadgeContractAddress = await donation.badgeContract();
+        expect(setBadgeContractAddress).to.equal(badgeNFTAddress);
+      });
+  
+      it("should emit BadgeContractSet event", async function () {
+        const { donation, owner } = await loadFixture(deployDonationFixture);
+  
+        // Deploy DonationBadgeNFT
+        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
+        const badgeNFT = await DonationBadgeNFT.deploy();
+        await badgeNFT.waitForDeployment();
+  
+        const badgeNFTAddress = await badgeNFT.getAddress();
+  
+        // Check if the event is emitted
+        await expect(donation.connect(owner).setBadgeContract(badgeNFTAddress))
+          .to.emit(donation, "BadgeContractSet")
+          .withArgs(badgeNFTAddress);
+      });
+  
+      it("should revert when called by non-owner", async function () {
+        const { donation, donor1 } = await loadFixture(deployDonationFixture);
+  
+        // Deploy DonationBadgeNFT
+        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
+        const badgeNFT = await DonationBadgeNFT.deploy();
+        await badgeNFT.waitForDeployment();
+  
+        const badgeNFTAddress = await badgeNFT.getAddress();
+  
+        // Try to set the badge contract with a non-owner account
+        await expect(donation.connect(donor1).setBadgeContract(badgeNFTAddress))
+        .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+        .withArgs(donor1.address);
+      });
+  
+      it("should revert when setting zero address", async function () {
+        const { donation, owner } = await loadFixture(deployDonationFixture);
+  
+        // Try to set the zero address
+        await expect(donation.connect(owner).setBadgeContract(ethers.ZeroAddress))
+          .to.be.revertedWith("Invalid badge contract address");
+      });
+    });
+  
+
 
   it("should deploy the Donation contract successfully", async function () {
     const { donation, sbt } = await loadFixture(deployDonationFixture);

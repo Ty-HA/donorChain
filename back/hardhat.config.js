@@ -8,6 +8,9 @@ const ETHERSCAN = process.env.ETHERSCAN_API_KEY || "";
 
 module.exports = {
   solidity: "0.8.24",
+  paths: {
+    sources: "./contracts",
+  },
   networks: {
     sepolia: {
       url: SEPOLIA_RPC_URL,

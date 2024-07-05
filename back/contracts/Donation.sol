@@ -9,7 +9,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 // Importing the DonationProofSBT contract to mint NFTs for donations
-import "./DonationProofSBT.sol";
+import { DonationProofSBT } from "./DonationProofSBT.sol";
+import { DonationBadgeNFT } from "./DonationBadgeNFT.sol";
 
 /*
  ____   ___  _   _  ___  ____   ____ _   _    _    ___ _   _ 
@@ -25,6 +26,8 @@ import "./DonationProofSBT.sol";
 /// @notice You can use this contract for donating to the contract
 contract Donation is Ownable, ReentrancyGuard, Pausable {
     DonationProofSBT public sbtContract;
+    DonationBadgeNFT public badgeContract;
+
 
     /// @notice A struct to represent an association
     /// @param name The name of the association
@@ -71,6 +74,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @notice An array of whitelisted associations
     address[] public associationList;
 
+    event BadgeContractSet(address indexed badgeContract);
     event AssociationAdded(
         address indexed association,
         string name,
@@ -115,6 +119,14 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     constructor(address _sbtContractAddress) Ownable(msg.sender) {
         sbtContract = DonationProofSBT(_sbtContractAddress);
     }
+
+    /// @notice Sets the address of the DonationBadgeNFT contract
+    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
+    function setBadgeContract(address _badgeContractAddress) external onlyOwner {
+    require(_badgeContractAddress != address(0), "Invalid badge contract address");
+    badgeContract = DonationBadgeNFT(_badgeContractAddress);
+    emit BadgeContractSet(_badgeContractAddress);
+}
 
     // ::::::::::::: MODIFIERS ::::::::::::: //
 
