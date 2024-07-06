@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-
 /// @title DonationBadgeNFT
 /// @author Ty HA
 /// @notice This contract is used to mint tokens representing donation badges as rewarding for donors
@@ -34,17 +33,25 @@ contract DonationBadgeNFT is ERC721, Ownable {
     uint256 public constant SILVER_THRESHOLD = 0.5 ether;
     uint256 public constant GOLD_THRESHOLD = 1 ether;
 
-    event BadgeMinted(address indexed donor, uint256 indexed tokenId, Tier tier);
+    event BadgeMinted(
+        address indexed donor,
+        uint256 indexed tokenId,
+        Tier tier
+    );
     event TierURIUpdated(Tier indexed tier, string newURI);
 
     constructor() ERC721("DonationBadge", "DBADGE") Ownable(msg.sender) {
-        tierURIs[Tier.Bronze] = "https://example.com/badges/bronze.json";
-        tierURIs[Tier.Silver] = "https://example.com/badges/silver.json";
-        tierURIs[Tier.Gold] = "https://example.com/badges/gold.json";
-    }
+    string memory baseURI = "ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/";
+    tierURIs[Tier.Bronze] = string(abi.encodePacked(baseURI, "bronze.json"));
+    tierURIs[Tier.Silver] = string(abi.encodePacked(baseURI, "silver.json"));
+    tierURIs[Tier.Gold] = string(abi.encodePacked(baseURI, "gold.json"));
+}
 
     modifier onlyDonationContract() {
-        require(msg.sender == donationContract, "Caller is not the Donation contract");
+        require(
+            msg.sender == donationContract,
+            "Caller is not the Donation contract"
+        );
         _;
     }
 
@@ -58,9 +65,15 @@ contract DonationBadgeNFT is ERC721, Ownable {
     /// @param _donor  The address of the donor
     /// @param _totalDonated  The total amount donated by the donor
     /// @return The token ID of the minted badge
-    function mintBadge(address _donor, uint256 _totalDonated) external onlyDonationContract returns (uint256) {
+    function mintBadge(
+        address _donor,
+        uint256 _totalDonated
+    ) external onlyDonationContract returns (uint256) {
         Tier newTier = getTierForAmount(_totalDonated);
-        require(newTier > donorHighestTier[_donor], "Donor already has this tier or higher");
+        require(
+            newTier > donorHighestTier[_donor],
+            "Donor already has this tier or higher"
+        );
 
         uint256 newTokenId = _nextTokenId++;
         _safeMint(_donor, newTokenId);
@@ -75,8 +88,13 @@ contract DonationBadgeNFT is ERC721, Ownable {
     /// @notice Get the URI of a badge token
     /// @param _tokenId  The token ID of the badge
     /// @return The URI of the badge token
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override returns (string memory) {
+        require(
+            _exists(_tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
         return tierURIs[badges[_tokenId].tier];
     }
 
@@ -110,7 +128,9 @@ contract DonationBadgeNFT is ERC721, Ownable {
     /// @notice Get the badges owned by a donor
     /// @param _donor  The address of the donor
     /// @return An array of token IDs representing the badges owned by the donor
-    function getDonorBadges(address _donor) external view returns (uint256[] memory) {
+    function getDonorBadges(
+        address _donor
+    ) external view returns (uint256[] memory) {
         uint256 balance = balanceOf(_donor);
         uint256[] memory tokenIds = new uint256[](balance);
         uint256 counter = 0;
@@ -132,7 +152,9 @@ contract DonationBadgeNFT is ERC721, Ownable {
 
     /// @notice Get the details of a badge
     /// @param _tokenId  The token ID of the badge
-    function getBadgeDetails(uint256 _tokenId) external view returns (Tier tier, uint256 timestamp) {
+    function getBadgeDetails(
+        uint256 _tokenId
+    ) external view returns (Tier tier, uint256 timestamp) {
         require(_exists(_tokenId), "Badge does not exist");
         Badge memory badge = badges[_tokenId];
         return (badge.tier, badge.timestamp);
@@ -154,6 +176,4 @@ contract DonationBadgeNFT is ERC721, Ownable {
         if (_tier == Tier.Bronze) return "Bronze";
         return "None";
     }
-
-    
 }

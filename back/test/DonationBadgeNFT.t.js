@@ -220,7 +220,7 @@ describe("DonationBadgeNFT", function () {
         const tokenUri = await badge.tokenURI(badgeId);
         console.log("Token URI:", tokenUri); // Afficher l'URI pour vérifier
 
-        expect(tokenUri).to.equal("https://example.com/badges/silver.json");
+        expect(tokenUri).to.equal("ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/silver.json");
     });
 
     });
