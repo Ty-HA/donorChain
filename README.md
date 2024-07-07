@@ -70,17 +70,17 @@ npx hardhat test
 npx hardhat coverage
 ```
 
-  175 passing (15s)
+  188 passing (16s)
 
 -----------------------|----------|----------|----------|----------|----------------|
 File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 -----------------------|----------|----------|----------|----------|----------------|
- contracts\            |      100 |    93.22 |      100 |      100 |                |
+ contracts\            |      100 |    90.48 |      100 |      100 |                |
   Donation.sol         |      100 |    93.06 |      100 |      100 |                |
   DonationBadgeNFT.sol |      100 |    96.43 |      100 |      100 |                |
-  DonationProofSBT.sol |      100 |    88.89 |      100 |      100 |                |
+  DonationProofSBT.sol |      100 |    76.92 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
-All files              |      100 |    93.22 |      100 |      100 |                |
+All files              |      100 |    90.48 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
 ### License
 DonorChain is open source and available under the MIT license.

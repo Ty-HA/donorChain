@@ -95,7 +95,6 @@ contract DonationProofSBT is
         uint256 _blockNumber
     ) external onlyDonationContract nonReentrant returns (uint256) {
         require(donationContract != address(0), "Donation contract not set");
-        require(_donor != address(0), "Invalid donor address");
         require(_amount > 0, "Donation amount must be greater than 0");
         require(_association != address(0), "Invalid association address");
         require(
