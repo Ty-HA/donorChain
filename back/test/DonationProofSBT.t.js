@@ -77,13 +77,35 @@ describe("DonationProofSBT", function () {
     });
   });
 
+  describe("Constructor", function () {
+    it("should set the initial base URI correctly", async function () {
+      const newSBT = await (await ethers.getContractFactory("DonationProofSBT")).deploy();
+      expect(await newSBT.getBaseURI()).to.equal("https://rose-written-jellyfish-653.mypinata.cloud/ipfs/QmbQzHVt2xdJ1vDRMjAoyF6eaLH3WRY3D3mgqTW1MWdxuY/");
+    });
+  });
+
   describe("setBaseURI & getBaseURI", function () {
     it("should set the base URI and allow it to be retrieved", async function () {
       const { sbt, owner } = await loadFixture(deployDonationFixture);
       const newBaseURI = "https://example.com/";
-
+  
       await sbt.connect(owner).setBaseURI(newBaseURI);
       expect(await sbt.getBaseURI()).to.equal(newBaseURI);
+    });
+  
+    it("should not allow non-owner to set base URI", async function () {
+      const { sbt, donor1, owner } = await loadFixture(deployDonationFixture);
+      const newBaseURI = "https://newuri.com/";
+      
+      expect(await sbt.owner()).to.not.equal(donor1.address);
+      expect(await sbt.owner()).to.equal(owner.address);
+  
+      await expect(
+        sbt.connect(donor1).setBaseURI(newBaseURI)
+      ).to.be.revertedWithCustomError(sbt, "OwnableUnauthorizedAccount")
+        .withArgs(donor1.address);
+  
+      expect(await sbt.getBaseURI()).to.not.equal(newBaseURI);
     });
   });
 
@@ -401,6 +423,11 @@ describe("DonationProofSBT", function () {
       const baseURI = await sbt.getBaseURI();
       expect(uri).to.equal(baseURI + newTokenId.toString());
     });
+    it("should return correct URI when base URI is empty", async function () {
+      await sbt.connect(owner).setBaseURI("");
+      const tokenId = 0; // Assuming this token exists
+      expect(await sbt.tokenURI(tokenId)).to.equal("0");
+    });
   });
 
   describe("getDonationProof", function () {
@@ -677,12 +704,12 @@ describe("DonationProofSBT", function () {
   });
 
   describe("burn", function () {
-    let donation, sbt, owner, donor1, donor2, asso;
+    let donation, sbt, owner, donor1, donor2, asso, asso1;
     let tokenId;
     let assoCounter = 0;
 
     beforeEach(async function () {
-      ({ donation, sbt, owner, donor1, donor2 } = await loadFixture(
+      ({ donation, sbt, owner, donor1, donor2, asso1 } = await loadFixture(
         deployDonationFixture
       ));
 
@@ -797,6 +824,19 @@ describe("DonationProofSBT", function () {
       const remainingTokens = await sbt.getDonorTokens(donor1.address);
       expect(remainingTokens.length).to.equal(0);
     });
+    it("should correctly return tokens after burning some in the middle", async function () {
+      // Mint 4 tokens
+      for (let i = 0; i < 4; i++) {
+        await donation.connect(donor1).donateToAssociation(asso1.address, ethers.parseEther("1"), { value: ethers.parseEther("1") });
+      }
+
+      // Burn tokens 1 and 3
+      await sbt.connect(donor1).burn(1);
+      await sbt.connect(donor1).burn(3);
+
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      expect(tokens).to.deep.equal([0n, 2n, 4n]);
+    });
   });
 
   describe("_exists and supportsInterface", function () {
@@ -843,6 +883,16 @@ describe("DonationProofSBT", function () {
           .to.be.revertedWithCustomError(sbt, "ERC721NonexistentToken")
           .withArgs(tokenId);
       });
+    });
+
+    it("should not support ERC20 interface", async function () {
+      const ERC20InterfaceId = "0x36372b07";
+      expect(await sbt.supportsInterface(ERC20InterfaceId)).to.be.false;
+    });
+
+    it("should support IERC165 interface", async function () {
+      const IERC165InterfaceId = "0x01ffc9a7";
+      expect(await sbt.supportsInterface(IERC165InterfaceId)).to.be.true;
     });
 
     describe("supportsInterface", function () {
@@ -901,6 +951,22 @@ describe("DonationProofSBT", function () {
       // Get the token ID
       const tokens = await sbt.getDonorTokens(donor1.address);
       tokenId = tokens[0];
+    });
+
+    it("should not allow transfer to contract address", async function () {
+      const donationAddress = await donation.getAddress();
+      expect(donationAddress).to.be.properAddress;
+      
+      await expect(
+        sbt.connect(donor1).transferFrom(donor1.address, donationAddress, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not allow approval to zero address", async function () {
+      const tokenId = 0; // Assuming this token exists
+      await expect(
+        sbt.connect(donor1).approve(ethers.ZeroAddress, tokenId)
+      ).to.be.revertedWith("SBT tokens do not support approvals");
     });
 
     it("should not allow transferFrom", async function () {

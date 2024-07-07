@@ -71,7 +71,7 @@ contract DonationProofSBT is
 
     /// @notice Sets the base URI for the metadata
     /// @param _newBaseURI The new base URI
-    function setBaseURI(string memory _newBaseURI) public {
+    function setBaseURI(string memory _newBaseURI) public onlyOwner {
         _baseTokenURI = _newBaseURI;
     }
 
