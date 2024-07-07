@@ -3,13 +3,14 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @title DonationProofSBT
 /// @author Ty HA
-/// @notice This contract is used to mint tokens representing donation proofs
+/// @notice This contract is used to mint tokens representing donation proofs non transferable
 contract DonationProofSBT is
     ERC721,
     ERC721URIStorage,
@@ -93,6 +94,14 @@ contract DonationProofSBT is
         address _association,
         uint256 _blockNumber
     ) external onlyDonationContract nonReentrant returns (uint256) {
+        require(donationContract != address(0), "Donation contract not set");
+        require(_donor != address(0), "Invalid donor address");
+        require(_amount > 0, "Donation amount must be greater than 0");
+        require(_association != address(0), "Invalid association address");
+        require(
+            _blockNumber < block.number,
+            "Block number must be in the past"
+        );
         emit MintAttempt(msg.sender, donationContract, _donor);
         uint256 tokenId = _tokenIdCounter++;
         _safeMint(_donor, tokenId);
@@ -133,6 +142,8 @@ contract DonationProofSBT is
         return _baseTokenURI;
     }
 
+    // ::::::::::::: GETTERS ::::::::::::: //
+
     /// @notice Returns the donation proof for a given token ID
     /// @param _tokenId The token ID
     /// @return The donation proof
@@ -159,6 +170,65 @@ contract DonationProofSBT is
             }
         }
         return tokensId;
+    }
+
+    // ::::::::::::: TRANSFER OVERRIDE ::::::::::::: //
+
+    /// @notice block native transfers
+    /// @param from The sender address
+    /// @param to The recipient address
+    /// @param tokenId The token ID
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+    /// @notice block safe transfers
+    /// @param from The sender address
+    /// @param to The recipient address
+    /// @param tokenId The token ID
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+    /// @notice block safe transfers with data
+    /// @param from The sender address
+    /// @param to The recipient address
+    /// @param tokenId The token ID
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+    /// @notice block approvals
+    /// @param to The recipient address
+    /// @param tokenId The token ID
+    function approve(
+        address to,
+        uint256 tokenId
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens do not support approvals");
+    }
+
+    /// @notice block setApprovalForAll
+    /// @param operator The operator address
+    /// @param approved The approval status
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens do not support approvals");
     }
 
     /// @notice Burn a token
