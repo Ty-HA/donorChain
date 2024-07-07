@@ -62,36 +62,18 @@ Deploy script was written to deploy and verify my 3 contracts
 It needed 0.9 sepoliaETH
 ```
 Deploying contracts with the account: 0x8E9B6101776469f4F5e57d509fee35751dBbA54A
-DonationProofSBT deployed to: 0xeceb12083f00474184cca1aa5B6De647282B5f01
-DonationBadgeNFT deployed to: 0x2fC914b148077B05Af80e19A64aA360B85355218
-Donation deployed to: 0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333
+DonationProofSBT deployed to: 0x4f2288bDe7714d7c6b577DA35ff2883ad8c2f0FC
+DonationBadgeNFT deployed to: 0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2
+Donation deployed to: 0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a
 Donation contract address set in DonationProofSBT contract
 Donation contract address set in DonationBadgeNFT contract
 ```
 Check the deployed smart contracts here:
-https://sepolia.etherscan.io/address/0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333#code
+https://sepolia.arbiscan.io/address/0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a
+https://sepolia.arbiscan.io/address/0x4f2288bDe7714d7c6b577DA35ff2883ad8c2f0FC
+https://sepolia.arbiscan.io/address/0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2
 
-Verified contracts, DonationProofSBT and DonationBadgeNFT
-Verified Donation by passing 2 params from its constructor
-```
-    /// @dev Sets the original owner of the contract upon deployment
-    /// @param _sbtContractAddress The address of the DonationProofSBT contract
-    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
-    constructor(
-        address _sbtContractAddress,
-        address _badgeContractAddress
-    ) Ownable(msg.sender) {
-        sbtContract = DonationProofSBT(_sbtContractAddress);
-        badgeContract = DonationBadgeNFT(_badgeContractAddress);
-    }
 
-```
-```
-npx hardhat verify --network sepolia 0xeceb12083f00474184cca1aa5B6De647282B5f01
-npx hardhat verify --network sepolia 0x2fC914b148077B05Af80e19A64aA360B85355218
-
-npx hardhat verify --network sepolia 0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333 0xeceb12083f00474184cca1aa5B6De647282B5f01 0x2fC914b148077B05Af80e19A64aA360B85355218
-```
 
 ## Smart contracts
 
