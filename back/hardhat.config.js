@@ -11,6 +11,12 @@ module.exports = {
   paths: {
     sources: "./contracts",
   },
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 200
+    },
+  },
   networks: {
     sepolia: {
       url: SEPOLIA_RPC_URL,

@@ -56,7 +56,41 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 cd DonorChain/back
 npx hardhat compile
 npx hardhat node
-npx hardhat run scripts/deploy.js --network localhost
+npx hardhat run scripts/deploy.js --network sepolia
+```
+Deploy script was written to deploy and verify my 3 contracts
+It needed 0.9 sepoliaETH
+```
+Deploying contracts with the account: 0x8E9B6101776469f4F5e57d509fee35751dBbA54A
+DonationProofSBT deployed to: 0xeceb12083f00474184cca1aa5B6De647282B5f01
+DonationBadgeNFT deployed to: 0x2fC914b148077B05Af80e19A64aA360B85355218
+Donation deployed to: 0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333
+Donation contract address set in DonationProofSBT contract
+Donation contract address set in DonationBadgeNFT contract
+```
+Check the deployed smart contracts here:
+https://sepolia.etherscan.io/address/0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333#code
+
+Verified contracts, DonationProofSBT and DonationBadgeNFT
+Verified Donation by passing 2 params from its constructor
+```
+    /// @dev Sets the original owner of the contract upon deployment
+    /// @param _sbtContractAddress The address of the DonationProofSBT contract
+    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
+    constructor(
+        address _sbtContractAddress,
+        address _badgeContractAddress
+    ) Ownable(msg.sender) {
+        sbtContract = DonationProofSBT(_sbtContractAddress);
+        badgeContract = DonationBadgeNFT(_badgeContractAddress);
+    }
+
+```
+```
+npx hardhat verify --network sepolia 0xeceb12083f00474184cca1aa5B6De647282B5f01
+npx hardhat verify --network sepolia 0x2fC914b148077B05Af80e19A64aA360B85355218
+
+npx hardhat verify --network sepolia 0x940D41893983B0AA1f85C5Dd5C760F73a1d3a333 0xeceb12083f00474184cca1aa5B6De647282B5f01 0x2fC914b148077B05Af80e19A64aA360B85355218
 ```
 
 ## Smart contracts
