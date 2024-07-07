@@ -455,18 +455,23 @@ describe("DonationProofSBT", function () {
       expect(proof.association).to.equal(asso.address);
     });
 
-    it("should not change the proof after token transfer", async function () {
+    it("should not allow token transfer and should not change the proof", async function () {
       const [, , , , newOwner] = await ethers.getSigners();
-
+    
       const proofBefore = await sbt.getDonationProof(tokenId);
-
-      // Transfer the token
-      await sbt
-        .connect(donor1)
-        .transferFrom(donor1.address, newOwner.address, tokenId);
-
+    
+      // Attempt to transfer the token (should fail)
+      await expect(
+        sbt.connect(donor1).transferFrom(donor1.address, newOwner.address, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    
+      // Verify that the token is still owned by the original owner
+      expect(await sbt.ownerOf(tokenId)).to.equal(donor1.address);
+    
+      // Get the proof after the failed transfer attempt
       const proofAfter = await sbt.getDonationProof(tokenId);
-
+    
+      // Verify that the proof hasn't changed
       expect(proofAfter.amount).to.equal(proofBefore.amount);
       expect(proofAfter.association).to.equal(proofBefore.association);
       expect(proofAfter.timestamp).to.equal(proofBefore.timestamp);

@@ -99,7 +99,7 @@ contract DonationProofSBT is
         require(_amount > 0, "Donation amount must be greater than 0");
         require(_association != address(0), "Invalid association address");
         require(
-            _blockNumber < block.number,
+            _blockNumber <= block.number,
             "Block number must be in the past"
         );
         emit MintAttempt(msg.sender, donationContract, _donor);
