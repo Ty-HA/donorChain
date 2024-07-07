@@ -174,64 +174,43 @@ contract DonationProofSBT is
 
     // ::::::::::::: TRANSFER OVERRIDE ::::::::::::: //
 
-    /// @notice block native transfers
-    /// @param from The sender address
-    /// @param to The recipient address
-    /// @param tokenId The token ID
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override(ERC721, IERC721) {
-        revert("SBT tokens are not transferable");
-    }
-
-    /// @notice block safe transfers
-    /// @param from The sender address
-    /// @param to The recipient address
-    /// @param tokenId The token ID
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override(ERC721, IERC721) {
-        revert("SBT tokens are not transferable");
-    }
-
     /// @notice block safe transfers with data
-    /// @param from The sender address
-    /// @param to The recipient address
-    /// @param tokenId The token ID
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override(ERC721, IERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+        /// @notice block native transfers
+    function transferFrom(
+        address,
+        address,
+        uint256
     ) public virtual override(ERC721, IERC721) {
         revert("SBT tokens are not transferable");
     }
 
     /// @notice block approvals
-    /// @param to The recipient address
-    /// @param tokenId The token ID
     function approve(
-        address to,
-        uint256 tokenId
+        address,
+        uint256
     ) public virtual override(ERC721, IERC721) {
         revert("SBT tokens do not support approvals");
     }
 
     /// @notice block setApprovalForAll
-    /// @param operator The operator address
-    /// @param approved The approval status
     function setApprovalForAll(
-        address operator,
-        bool approved
+        address,
+        bool
     ) public virtual override(ERC721, IERC721) {
         revert("SBT tokens do not support approvals");
     }
 
     /// @notice Burn a token
+    /// @param _tokenId The token ID to burn
     function burn(uint256 _tokenId) external {
         require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
         require(_exists(_tokenId), "Token does not exist");
