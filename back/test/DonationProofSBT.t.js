@@ -787,4 +787,72 @@ describe("_exists and supportsInterface", function () {
         });
     });
 });
+
+describe("Transfer Restrictions", function () {
+  let sbt, donation, owner, donor1, donor2, asso1;
+  let tokenId;
+
+  beforeEach(async function () {
+    ({ sbt, donation, owner, donor1, donor2, asso1 } = await loadFixture(deployDonationFixture));
+
+    // Check if the association is already whitelisted
+    const associationDetails = await donation.getAssociationDetails(asso1.address);
+    if (!associationDetails[3]) { // Assuming the fourth element is the whitelisted status
+      // Whitelist the association only if it's not already whitelisted
+      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+    }
+
+    // Make a donation to mint a token
+    const donationAmount = ethers.parseEther("1");
+    await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+
+    // Get the token ID
+    const tokens = await sbt.getDonorTokens(donor1.address);
+    tokenId = tokens[0];
+  });
+
+  it("should not allow transferFrom", async function () {
+    await expect(
+      sbt.connect(donor1).transferFrom(donor1.address, donor2.address, tokenId)
+    ).to.be.revertedWith("SBT tokens are not transferable");
+  });
+
+  it("should not allow safeTransferFrom without data", async function () {
+    await expect(
+      sbt.connect(donor1)['safeTransferFrom(address,address,uint256)'](donor1.address, donor2.address, tokenId)
+    ).to.be.revertedWith("SBT tokens are not transferable");
+  });
+
+  it("should not allow safeTransferFrom with data", async function () {
+    await expect(
+      sbt.connect(donor1)['safeTransferFrom(address,address,uint256,bytes)'](donor1.address, donor2.address, tokenId, '0x')
+    ).to.be.revertedWith("SBT tokens are not transferable");
+  });
+
+  it("should not allow approve", async function () {
+    await expect(
+      sbt.connect(donor1).approve(donor2.address, tokenId)
+    ).to.be.revertedWith("SBT tokens do not support approvals");
+  });
+
+  it("should not allow setApprovalForAll", async function () {
+    await expect(
+      sbt.connect(donor1).setApprovalForAll(donor2.address, true)
+    ).to.be.revertedWith("SBT tokens do not support approvals");
+  });
+
+  it("should not allow owner to transfer", async function () {
+    await expect(
+      sbt.connect(owner).transferFrom(donor1.address, donor2.address, tokenId)
+    ).to.be.revertedWith("SBT tokens are not transferable");
+  });
+
+  it("should not change ownership after transfer attempt", async function () {
+    await expect(
+      sbt.connect(donor1).transferFrom(donor1.address, donor2.address, tokenId)
+    ).to.be.revertedWith("SBT tokens are not transferable");
+
+    expect(await sbt.ownerOf(tokenId)).to.equal(donor1.address);
+  });
+});
 });
