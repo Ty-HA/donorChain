@@ -1,7 +1,7 @@
-export const contractDonationProofSBTAddress =
-  "0x4f2288bDe7714d7c6b577DA35ff2883ad8c2f0FC";
+export const contractDonationBadgeNFTAddress =
+  "0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2";
 
-export const contractDonationProofSBTAbi = [
+export const contractDonationBadgeNFTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   {
     inputs: [
@@ -60,7 +60,6 @@ export const contractDonationProofSBTAbi = [
     name: "OwnableUnauthorizedAccount",
     type: "error",
   },
-  { inputs: [], name: "ReentrancyGuardReentrantCall", type: "error" },
   {
     anonymous: false,
     inputs: [
@@ -110,119 +109,25 @@ export const contractDonationProofSBTAbi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "_fromTokenId",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "_toTokenId",
-        type: "uint256",
-      },
-    ],
-    name: "BatchMetadataUpdate",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "caller",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "donationContract",
-        type: "address",
-      },
-    ],
-    name: "DonationContractSet",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: true,
         internalType: "address",
         name: "donor",
         type: "address",
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
         indexed: true,
-        internalType: "address",
-        name: "association",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "timestamp",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "blockNumber",
-        type: "uint256",
-      },
-      {
-        indexed: false,
         internalType: "uint256",
         name: "tokenId",
         type: "uint256",
       },
-    ],
-    name: "DonationProofMinted",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       {
         indexed: false,
-        internalType: "uint256",
-        name: "_tokenId",
-        type: "uint256",
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "tier",
+        type: "uint8",
       },
     ],
-    name: "MetadataUpdate",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "caller",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "donationContract",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "donor",
-        type: "address",
-      },
-    ],
-    name: "MintAttempt",
+    name: "BadgeMinted",
     type: "event",
   },
   {
@@ -247,6 +152,25 @@ export const contractDonationProofSBTAbi = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: true,
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "tier",
+        type: "uint8",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "newURI",
+        type: "string",
+      },
+    ],
+    name: "TierURIUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
       { indexed: true, internalType: "address", name: "from", type: "address" },
       { indexed: true, internalType: "address", name: "to", type: "address" },
       {
@@ -260,13 +184,48 @@ export const contractDonationProofSBTAbi = [
     type: "event",
   },
   {
+    inputs: [],
+    name: "BRONZE_THRESHOLD",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "GOLD_THRESHOLD",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "SILVER_THRESHOLD",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "tokenId", type: "uint256" },
     ],
     name: "approve",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "badges",
+    outputs: [
+      {
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "tier",
+        type: "uint8",
+      },
+      { internalType: "uint256", name: "timestamp", type: "uint256" },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -277,13 +236,6 @@ export const contractDonationProofSBTAbi = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
-    name: "burn",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "donationContract",
     outputs: [{ internalType: "address", name: "", type: "address" }],
@@ -291,13 +243,10 @@ export const contractDonationProofSBTAbi = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    name: "donationProofs",
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "donorHighestTier",
     outputs: [
-      { internalType: "uint256", name: "amount", type: "uint256" },
-      { internalType: "address", name: "association", type: "address" },
-      { internalType: "uint256", name: "timestamp", type: "uint256" },
-      { internalType: "uint256", name: "blockNumber", type: "uint256" },
+      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
     ],
     stateMutability: "view",
     type: "function",
@@ -310,36 +259,55 @@ export const contractDonationProofSBTAbi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "getBaseURI",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
-    name: "getDonationProof",
+    name: "getBadgeDetails",
     outputs: [
       {
-        components: [
-          { internalType: "uint256", name: "amount", type: "uint256" },
-          { internalType: "address", name: "association", type: "address" },
-          { internalType: "uint256", name: "timestamp", type: "uint256" },
-          { internalType: "uint256", name: "blockNumber", type: "uint256" },
-        ],
-        internalType: "struct DonationProofSBT.DonationProof",
-        name: "",
-        type: "tuple",
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "tier",
+        type: "uint8",
       },
+      { internalType: "uint256", name: "timestamp", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [{ internalType: "address", name: "_donor", type: "address" }],
-    name: "getDonorTokens",
+    name: "getDonorBadges",
     outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_donor", type: "address" }],
+    name: "getDonorHighestTier",
+    outputs: [
+      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" }],
+    name: "getTierForAmount",
+    outputs: [
+      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
+    ],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "_tier",
+        type: "uint8",
+      },
+    ],
+    name: "getTierName",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "pure",
     type: "function",
   },
   {
@@ -355,11 +323,9 @@ export const contractDonationProofSBTAbi = [
   {
     inputs: [
       { internalType: "address", name: "_donor", type: "address" },
-      { internalType: "uint256", name: "_amount", type: "uint256" },
-      { internalType: "address", name: "_association", type: "address" },
-      { internalType: "uint256", name: "_blockNumber", type: "uint256" },
+      { internalType: "uint256", name: "_totalDonated", type: "uint256" },
     ],
-    name: "mint",
+    name: "mintBadge",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "nonpayable",
     type: "function",
@@ -405,10 +371,10 @@ export const contractDonationProofSBTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
-      { internalType: "bytes", name: "", type: "bytes" },
+      { internalType: "address", name: "from", type: "address" },
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "tokenId", type: "uint256" },
+      { internalType: "bytes", name: "data", type: "bytes" },
     ],
     name: "safeTransferFrom",
     outputs: [],
@@ -417,17 +383,10 @@ export const contractDonationProofSBTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "bool", name: "", type: "bool" },
+      { internalType: "address", name: "operator", type: "address" },
+      { internalType: "bool", name: "approved", type: "bool" },
     ],
     name: "setApprovalForAll",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "string", name: "_newBaseURI", type: "string" }],
-    name: "setBaseURI",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -437,6 +396,20 @@ export const contractDonationProofSBTAbi = [
       { internalType: "address", name: "_donationContract", type: "address" },
     ],
     name: "setDonationContract",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "_tier",
+        type: "uint8",
+      },
+      { internalType: "string", name: "_uri", type: "string" },
+    ],
+    name: "setTierURI",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -456,6 +429,15 @@ export const contractDonationProofSBTAbi = [
     type: "function",
   },
   {
+    inputs: [
+      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
+    ],
+    name: "tierURIs",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
     name: "tokenURI",
     outputs: [{ internalType: "string", name: "", type: "string" }],
@@ -464,9 +446,9 @@ export const contractDonationProofSBTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "address", name: "from", type: "address" },
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "tokenId", type: "uint256" },
     ],
     name: "transferFrom",
     outputs: [],
