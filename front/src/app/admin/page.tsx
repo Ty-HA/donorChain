@@ -1,80 +1,62 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import {
-  contractDonationProofSBTAddress,
-  contractDonationProofSBTAbi,
-  contractDonationBadgeNFTAddress,
-  contractDonationBadgeNFTAbi,
-  contractDonationAddress,
-  contractDonationAbi,
-} from "@/constants";
-import {
-  useAccount,
-  useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-} from "wagmi";
-
+import { useUserRole } from '@/hooks/userRole';
 import AssociationsList from "@/components/AssociationsList";
 import CheckCommissions from "@/components/CheckCommissions";
-
 import { Button } from "flowbite-react";
 
-const authorizedAddress = "0x8E9B6101776469f4F5e57d509fee35751dBbA54A";
-
 export default function Admin() {
-  const { address, isConnected } = useAccount();
+  const userRole = useUserRole();
+
+  if (userRole === 'disconnected') {
+    return (
+      <div>
+        <h2 className="text-black mb-4 font-bold text-xl">ADMIN DASHBOARD</h2>
+        <p className="text-black mb-24">Please connect your wallet</p>
+      </div>
+    );
+  }
+
+  if (userRole !== 'admin') {
+    return (
+      <div className="min-h-screen">
+        <h2 className="text-red-600 mb-4 font-bold text-3xl text-center mt-8">
+          ACCESS DENIED
+        </h2>
+        <p className="text-red-600 mb-24 text-center font-bold">
+          You are not authorized to access this page.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {isConnected ? (
-        address!.toLowerCase() === authorizedAddress.toLowerCase() ? (
-          <div className="min-h-screen">
-            <h2 className="text-green-500 mb-4 font-bold text-3xl text-center mt-8">
-              ADMIN DASHBOARD
-            </h2>
-            <p className="text-black mb-12 text-xl text-center">
-              Connected with <span className="text-blue-700">{address}</span>
-            </p>
-            {/* Admin Buttons */}
-            <div className="space-y-2 flex flex-col mb-10">              
-                <AssociationsList />
-                <CheckCommissions />
-             
-              
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Withdraw My Commissions
-              </Button>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Update Association Wallet
-              </Button>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Update Association Postal Address
-              </Button>
-              <Button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                Pause the Contract
-              </Button>
-              <Button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                UnPause the Contract
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="min-h-screen">
-            <h2 className="text-red-600 mb-4 font-bold text-3xl text-center mt-8">
-              ACCESS DENIED
-            </h2>
-            <p className="text-red-600 mb-24 text-center font-bold">
-              You are not authorized to access this page.
-            </p>
-          </div>
-        )
-      ) : (
-        <div>
-          <h2 className="text-black mb-4 font-bold text-xl">ADMIN DASHBOARD</h2>
-          <p className="text-black mb-24">Please connect your wallet</p>
-        </div>
-      )}
-    </>
+    <div className="min-h-screen">
+      <h2 className="text-green-500 mb-4 font-bold text-3xl text-center mt-8">
+        ADMIN DASHBOARD
+      </h2>
+      <p className="text-black mb-12 text-xl text-center">
+        Connected as Admin
+      </p>
+      {/* Admin Buttons */}
+      <div className="space-y-2 flex flex-col mb-10">
+        <AssociationsList />
+        <CheckCommissions />
+        <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+          Withdraw My Commissions
+        </Button>
+        <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+          Update Association Wallet
+        </Button>
+        <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+          Update Association Postal Address
+        </Button>
+        <Button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+          Pause the Contract
+        </Button>
+        <Button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          UnPause the Contract
+        </Button>
+      </div>
+    </div>
   );
 }

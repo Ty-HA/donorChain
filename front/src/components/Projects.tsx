@@ -41,7 +41,7 @@ interface Donation {
   contributors: string;
 }
 
-// Créez un tableau de toutes les donations (ceci pourrait venir d'une API dans une application réelle)
+// Create an array of donations with the interface defined above
 const allDonations: Donation[] = [
   {
     id: "1",
