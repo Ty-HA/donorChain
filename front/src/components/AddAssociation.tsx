@@ -21,6 +21,8 @@ const AddAssociation = ({ refetch }: AddAssociationProps) => {
   const [hash, setHash] = useState<`0x${string}` | undefined>();
 
   const { writeContract, data: writeData } = useWriteContract();
+
+  
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
@@ -74,6 +76,7 @@ const AddAssociation = ({ refetch }: AddAssociationProps) => {
 
       <div className="flex flex-col space-y-4">
         <input
+          name="associationAddr"
           placeholder="Association address"
           onChange={(e) => setAssociationAddr(e.target.value)}
           value={associationAddr}
@@ -85,6 +88,7 @@ const AddAssociation = ({ refetch }: AddAssociationProps) => {
           }}
         />
         <input
+          name="associationName"
           placeholder="Association name"
           onChange={(e) => setAssociationName(e.target.value)}
           value={associationName}
@@ -96,6 +100,7 @@ const AddAssociation = ({ refetch }: AddAssociationProps) => {
           }}
         />
         <input
+          name="postalAddress"
           placeholder="Postal address"
           onChange={(e) => setPostalAddress(e.target.value)}
           value={postalAddress}
@@ -107,6 +112,7 @@ const AddAssociation = ({ refetch }: AddAssociationProps) => {
           }}
         />
         <input
+          name="rnaNumber"
           placeholder="RNA number"
           onChange={(e) => setRnaNumber(e.target.value)}
           value={rnaNumber}

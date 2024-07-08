@@ -66,6 +66,7 @@ const RemoveAssociation = ({ refetch }: RemoveAssociationProps) => {
 
       <div className="flex flex-col space-y-4">
         <input
+          name="associationAddr"
           placeholder="Association address"
           onChange={(e) => setAssociationAddr(e.target.value)}
           value={associationAddr}

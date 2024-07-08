@@ -16,7 +16,7 @@ import {
 } from "wagmi";
 
 import AssociationsList from "@/components/AssociationsList";
-import RemoveAssociation from "@/components/RemoveAssociation";
+import CheckCommissions from "@/components/CheckCommissions";
 
 import { Button } from "flowbite-react";
 
@@ -39,10 +39,9 @@ export default function Admin() {
             {/* Admin Buttons */}
             <div className="space-y-2 flex flex-col mb-10">              
                 <AssociationsList />
+                <CheckCommissions />
              
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Check My Accumulated Commissions
-              </Button>
+              
               <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
                 Withdraw My Commissions
               </Button>

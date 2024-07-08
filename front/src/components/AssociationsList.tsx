@@ -20,7 +20,8 @@ async function getWhitelistedAssociations() {
         address,
         name: details.name,
         postalAddress: details.postalAddress,
-        rnaNumber: details.rnaNumber
+        rnaNumber: details.rnaNumber,
+        addedDate: new Date(Number(details.lastDeposit) * 1000).toLocaleDateString()
       };
     }));
     console.log('Whitelisted Associations:', associationsDetails);
@@ -36,6 +37,7 @@ interface Association {
   name: string;
   postalAddress: string;
   rnaNumber: string;
+  addedDate: string;
 }
 
 const AssociationsList = () => {
@@ -83,6 +85,7 @@ const AssociationsList = () => {
               <p className="text-sm text-black">Wallet Address: {association.address}</p>
               <p className="text-sm text-black">Postal Address: {association.postalAddress}</p>
               <p className="text-sm text-black">RNA Number: {association.rnaNumber}</p>
+              <p className="text-sm text-black">Added Date: {association.addedDate}</p>
             </li>
           ))}
         </ul>

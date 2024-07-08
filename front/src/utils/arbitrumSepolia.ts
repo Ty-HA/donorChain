@@ -24,4 +24,5 @@ export const arbitrumSepolia = {
       
     },
     testnet: true,
+    estimatedBlockTime: 2,
 }
