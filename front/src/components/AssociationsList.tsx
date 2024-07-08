@@ -12,17 +12,33 @@ async function getWhitelistedAssociations() {
   const contract = new ethers.Contract(contractAddress, contractABI, provider);
 
   try {
-    const associations = await contract.getWhitelistedAssociations();
-    console.log('Whitelisted Associations:', associations);
-    return associations;
+    const associationAddresses = await contract.getWhitelistedAssociations();
+    const associationsDetails = await Promise.all(associationAddresses.map(async (address: string) => {
+      const details = await contract.associations(address);
+      return {
+        address,
+        name: details.name,
+        postalAddress: details.postalAddress,
+        rnaNumber: details.rnaNumber
+      };
+    }));
+    console.log('Whitelisted Associations:', associationsDetails);
+    return associationsDetails;
   } catch (error) {
     console.error('Error fetching associations:', error);
+    throw error;
   }
 }
-
-
+interface Association {
+    address: string;
+    name: string;
+    postalAddress: string;
+    rnaNumber: string;
+  }
+  
+  
 const AssociationsList = () => {
-  const [associations, setAssociations] = useState<string[]>([]);
+  const [associations, setAssociations] = useState<Association[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,8 +76,11 @@ const AssociationsList = () => {
       {associations.length > 0 ? (
         <ul>
           {associations.map((association, index) => (
-            <li className="text-black" key={index}>
-              {association}
+            <li key={index} className="mb-4 p-4 border rounded-lg shadow-sm">
+              <p className="font-bold text-lg text-black">Name: {association.name}</p>
+              <p className="text-sm text-black">Wallet Address: {association.address}</p>
+              <p className="text-sm text-black">Postal Address: {association.postalAddress}</p>
+              <p className="text-sm text-black">RNA Number: {association.rnaNumber}</p>
             </li>
           ))}
         </ul>
