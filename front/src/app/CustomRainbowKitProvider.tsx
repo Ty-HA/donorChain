@@ -1,62 +1,66 @@
-'use client'
-import React from 'react';
-import '@rainbow-me/rainbowkit/styles.css';
+"use client";
+import React from "react";
+import "@rainbow-me/rainbowkit/styles.css";
 import {
   getDefaultConfig,
   RainbowKitProvider,
-  Chain
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-// import {sepolia} from 'wagmi/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
+  Chain,
+} from "@rainbow-me/rainbowkit";
+import { WagmiProvider } from "wagmi";
+import { arbitrumSepolia } from "@/utils/arbitrumSepolia"
 
-require('dotenv').config();
+// import {sepolia} from 'wagmi/chains';
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+
+require("dotenv").config();
 
 interface RainbowKitProviderProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
-const Arbitrum = {
-    id: 421614,
-    name: 'Arbitrum Sepolia',
-    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
-    iconBackground: '#fff',
-    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-    rpcUrls: {
-      default: { http: ['https://sepolia-rollup.arbitrum.io/rpc'] },
-    },
-    blockExplorers: {
-      default: { name: 'Sepolia Arbiscan', url: 'https://sepolia.arbiscan.io' },
-    },
-    /*contracts: {
+/*
+const RPC = process.env.NEXT_PUBLIC_ALCHEMY_RPC || "https://sepolia-rollup.arbitrum.io/rpc";
+
+
+const arbitrumSepolia = {
+  id: 421614,
+  name: "Arbitrum Sepolia",
+  iconUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png",
+  iconBackground: "#fff",
+  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    // default: { http: ["https://sepolia-rollup.arbitrum.io/rpc"] },
+    default: { http: [RPC] },
+  },
+  blockExplorers: {
+    default: { name: "Sepolia Arbiscan", url: "https://sepolia.arbiscan.io" },
+  },
+  contracts: {
       multicall3: {
-        address: '0xca11bde05977b3631167028862be2a173976ca11',
-        blockCreated: 11_907_934,
+        address: '0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a',
+        blockCreated: 751532,
       },
-    },*/
-  } as const satisfies Chain;
-  
-    
+    },
+} as const satisfies Chain;
+ */
+
 const config = getDefaultConfig({
-    appName: 'Donor Chain',
-    projectId: process.env.NEXT_PUBLIC_PROJECT_ID as string,
-    chains: [Arbitrum],
-    ssr: true, 
+  appName: "Donor Chain",
+  projectId: process.env.NEXT_PUBLIC_PROJECT_ID as string,
+  chains: [arbitrumSepolia],
+  ssr: true,
 });
 
 const queryClient = new QueryClient();
-const CustomRainbowKitProvider: React.FC<RainbowKitProviderProps> = ({ children }) => {
+const CustomRainbowKitProvider: React.FC<RainbowKitProviderProps> = ({
+  children,
+}) => {
   return (
     <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider>
-                {children}
-            </RainbowKitProvider>
-        </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
+      </QueryClientProvider>
     </WagmiProvider>
-  )
-}
-export default CustomRainbowKitProvider
+  );
+};
+export default CustomRainbowKitProvider;
