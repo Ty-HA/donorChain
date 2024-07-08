@@ -4,7 +4,7 @@ import { contractDonationAddress, contractDonationAbi } from "@/constants";
 
 export function useUserRole() {
   const [userRole, setUserRole] = useState<
-    "disconnected" | "admin" | "association" | "donateur"
+    "disconnected" | "admin" | "association" | "donor"
   >("disconnected");
   const adminAddress = process.env.NEXT_PUBLIC_ADMIN_ADDRESS;
 
@@ -45,7 +45,7 @@ export function useUserRole() {
             return;
           }
 
-          setUserRole("donateur");
+          setUserRole("donor");
         } catch (error) {
           console.error("An error occurred while checking user role:", error);
           setUserRole("disconnected");

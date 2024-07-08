@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Image from "next/image";
 import { Card, Button, Modal } from "flowbite-react";
 import { FaUserCircle } from "react-icons/fa";
 

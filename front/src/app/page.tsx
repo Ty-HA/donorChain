@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Projects from "@/components/Projects";
+import ProjectCard from "@/components/ProjectCard";
 import TotalDonations from "@/components/TotalDonations";
 import Contact from "@/components/Contact";
 
@@ -122,6 +123,7 @@ const App = () => {
       {FirstSection()}
       <div id="projects" className="flex flex-col items-center w-full bg-white">
         <Projects />
+        <ProjectCard />
       </div>
       <div id="projects" className="flex flex-col items-center w-full bg-gradient-to-r from-blue-900 to-blue-500 mt-10">
         <TotalDonations />
