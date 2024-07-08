@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import AddAssociation from "./AddAssociation";
 import RemoveAssociation from "./RemoveAssociation";
+import UpdateAssociationPostalAddr from "./UpdateAssociationPostalAddr";
+
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 import { ethers } from "ethers";
 
@@ -74,6 +76,8 @@ const AssociationsList = () => {
     <div>
       <AddAssociation refetch={handleAssociationChange} />
       <RemoveAssociation refetch={handleAssociationChange} />
+      <UpdateAssociationPostalAddr refetch={handleAssociationChange} />
+   
       <h2 className="text-blue-800 text-3xl font-extrabold mb-4 mt-10">
         Associations List
       </h2>

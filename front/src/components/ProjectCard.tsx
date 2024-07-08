@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Card, Button, Modal } from "flowbite-react";
-import { FaUserCircle } from "react-icons/fa";
+import { FaAddressCard, FaUserCircle, FaWallet } from "react-icons/fa";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 import { ethers } from "ethers";
 
@@ -12,9 +12,9 @@ const ProjectTitles: string[] = [
 ];
 
 const ProjectDescription: string[] = [
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  "Help Azar to continue his study",
+  "Save Peter life",
+  "Build School for poor students",
 ];
 
 const ProjectCategories: string[] = ["Education", "Health", "School Building"];
@@ -122,29 +122,25 @@ const ProjectCard = () => {
               className="flex flex-col h-full border-2 border-gray-300"
             >
               <div className="flex justify-between items-center">
-                <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                  {ProjectTitles[index] || association.name}
+                <h5 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                {association.name}
                 </h5>
                 <span className="text-xs font-semibold mr-2 px-2.5 py-0.5 rounded bg-blue-300 text-blue-800 text-center">
                   {ProjectCategories[index] || "Category"}
                 </span>
               </div>
-              <h5 className="text-md font-bold tracking-tight text-gray-900 dark:text-white">
-                {association.name}
-              </h5>
               <p className="text-black text-md flex items-center">
-                <FaUserCircle className="mr-2" />
+                <FaWallet className="mr-2" />
                 {association.address}
               </p>
-              <p className="font-normal text-gray-700 dark:text-gray-400 flex-grow">
+              <p className="text-black text-md flex items-center">
+                <FaAddressCard className="mr-2" />
+                {association.postalAddress}
+              </p>
+              <p className="text-xl font-normal text-black dark:text-gray-400 flex-grow mt-4 mb-4">
                 {ProjectDescription[index] || "No description available."}
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 my-4">
-                <div
-                  className="bg-green-600 h-2.5 rounded-full"
-                  style={{ width: "75%" }}
-                ></div>
-              </div>
+             
               <div className="text-black text-xl flex items-center">
                 <svg
                   width="40"
@@ -195,7 +191,7 @@ const ProjectCard = () => {
                   Share
                 </Button>
               </div>
-              <h2 className="text-black text-xl">Contributors:</h2>
+              <h2 className="text-black text-xl">Donors:</h2>
               <ul>
                 {/* You might want to fetch and display actual contributors here */}
                 <li className="text-black text-md flex items-center">
