@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import AddAssociation from "./AddAssociation";
+import RemoveAssociation from "./RemoveAssociation";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 import { ethers } from "ethers";
 
@@ -29,14 +30,14 @@ async function getWhitelistedAssociations() {
     throw error;
   }
 }
+
 interface Association {
-    address: string;
-    name: string;
-    postalAddress: string;
-    rnaNumber: string;
-  }
-  
-  
+  address: string;
+  name: string;
+  postalAddress: string;
+  rnaNumber: string;
+}
+
 const AssociationsList = () => {
   const [associations, setAssociations] = useState<Association[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +61,7 @@ const AssociationsList = () => {
     fetchAssociations();
   }, []);
 
-  const handleAddAssociation = () => {
+  const handleAssociationChange = () => {
     fetchAssociations();
   };
 
@@ -69,7 +70,8 @@ const AssociationsList = () => {
 
   return (
     <div>
-      <AddAssociation refetch={handleAddAssociation} />
+      <AddAssociation refetch={handleAssociationChange} />
+      <RemoveAssociation refetch={handleAssociationChange} />
       <h2 className="text-blue-800 text-3xl font-extrabold mb-4 mt-10">
         Associations List
       </h2>

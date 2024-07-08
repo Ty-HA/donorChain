@@ -14,8 +14,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import AddAssociation from "@/components/AddAssociation";
+
 import AssociationsList from "@/components/AssociationsList";
+import RemoveAssociation from "@/components/RemoveAssociation";
 
 import { Button } from "flowbite-react";
 
@@ -36,25 +37,20 @@ export default function Admin() {
               Connected with <span className="text-blue-700">{address}</span>
             </p>
             {/* Admin Buttons */}
-            <div className="space-y-2 flex flex-col">              
+            <div className="space-y-2 flex flex-col mb-10">              
                 <AssociationsList />
+             
               <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Remove Association
+                Check My Accumulated Commissions
+              </Button>
+              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+                Withdraw My Commissions
               </Button>
               <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
                 Update Association Wallet
               </Button>
               <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
                 Update Association Postal Address
-              </Button>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Get the whitelist
-              </Button>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Check My Balance
-              </Button>
-              <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-                Withdraw My Commissions
               </Button>
               <Button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                 Pause the Contract
