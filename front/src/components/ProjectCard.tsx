@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, Button, Modal } from "flowbite-react";
 import { FaAddressCard, FaUserCircle, FaWallet } from "react-icons/fa";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
+import DonateToAssociation from './DonateToAssociation';
+import GetDonorsForOneAssociation from './GetDonorsForOneAssociation';
 import { ethers } from "ethers";
 
 // TO DO CHANGE DESCR and CATEGORY IN DYNAMIC DATA IN SMART CONTRACT
@@ -10,9 +12,12 @@ const ProjectDescription: string[] = [
   "Help Azar to continue his study",
   "Save Peter life",
   "Build School for poor students",
+  "Help Azar to continue his study",
+  "Save Peter life",
+  "Build School for poor students",
 ];
 
-const ProjectCategories: string[] = ["Education", "Health", "School Building"];
+const ProjectCategories: string[] = ["Education", "Health", "School Building","Education", "Health", "School Building"];
 
 interface Contributor {
   address: string;
@@ -179,21 +184,15 @@ const ProjectCard = () => {
                 Total raised: {association.balance} ETH
               </div>
               <div className="grid grid-cols-2 gap-2 w-full">
-                <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold">
-                  Donate now
-                </Button>
+              <DonateToAssociation 
+  associationAddress={association.address}
+  associationName={association.name}
+/>
                 <Button className="bg-yellow-400 text-white hover:bg-green-700 font-bold">
                   Share
                 </Button>
               </div>
-              <h2 className="text-black text-xl">Donors:</h2>
-              <ul>
-                {/* You might want to fetch and display actual contributors here */}
-                <li className="text-black text-md flex items-center">
-                  <FaUserCircle className="mr-2" />
-                  {association.address}
-                </li>
-              </ul>
+              <GetDonorsForOneAssociation associationAddress={association.address} />
             </Card>
           </div>
         ))}
