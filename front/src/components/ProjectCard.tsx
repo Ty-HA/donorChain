@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, Button, Modal } from "flowbite-react";
 import { FaAddressCard, FaUserCircle, FaWallet } from "react-icons/fa";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
+import DonateToAssociation from "./DonateToAssociation";
+import GetDonorsForOneAssociation from "./GetDonorsForOneAssociation";
 import { ethers } from "ethers";
 
 // TO DO CHANGE DESCR and CATEGORY IN DYNAMIC DATA IN SMART CONTRACT
@@ -10,9 +12,19 @@ const ProjectDescription: string[] = [
   "Help Azar to continue his study",
   "Save Peter life",
   "Build School for poor students",
+  "Help Azar to continue his study",
+  "Save Peter life",
+  "Build School for poor students",
 ];
 
-const ProjectCategories: string[] = ["Education", "Health", "School Building"];
+const ProjectCategories: string[] = [
+  "Education",
+  "Health",
+  "School Building",
+  "Education",
+  "Health",
+  "School Building",
+];
 
 interface Contributor {
   address: string;
@@ -118,7 +130,7 @@ const ProjectCard = () => {
             >
               <div className="flex justify-between items-center">
                 <h5 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {association.name}
+                  {association.name}
                 </h5>
                 <span className="text-xs font-semibold mr-2 px-2.5 py-0.5 rounded bg-blue-300 text-blue-800 text-center">
                   {ProjectCategories[index] || "Category"}
@@ -135,7 +147,7 @@ const ProjectCard = () => {
               <p className="text-xl font-normal text-black dark:text-gray-400 flex-grow mt-4 mb-4">
                 {ProjectDescription[index] || "No description available."}
               </p>
-             
+
               <div className="text-black text-xl flex items-center">
                 <svg
                   width="40"
@@ -178,22 +190,21 @@ const ProjectCard = () => {
                 </svg>
                 Total raised: {association.balance} ETH
               </div>
-              <div className="grid grid-cols-2 gap-2 w-full">
-                <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold">
-                  Donate now
-                </Button>
+              <div className="grid grid-cols-2 gap-2 w-full mt-auto">
+                <DonateToAssociation
+                  associationAddress={association.address}
+                  associationName={association.name}
+                />
                 <Button className="bg-yellow-400 text-white hover:bg-green-700 font-bold">
                   Share
                 </Button>
               </div>
-              <h2 className="text-black text-xl">Donors:</h2>
-              <ul>
-                {/* You might want to fetch and display actual contributors here */}
-                <li className="text-black text-md flex items-center">
-                  <FaUserCircle className="mr-2" />
-                  {association.address}
-                </li>
-              </ul>
+              <div className="h-20 overflow-y-auto my-4">
+              <GetDonorsForOneAssociation
+                associationAddress={association.address}
+                maxDonors={3}
+              />
+              </div>
             </Card>
           </div>
         ))}
