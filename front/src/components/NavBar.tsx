@@ -1,20 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
-import { Navbar, Dropdown } from "flowbite-react";
+import { Navbar } from "flowbite-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import ConnectWallet from "./ConnectWallet";
-// import CrossmarkButton from "./CrossmarkButton";
-// import Web3AuthLogin from "./web3auth/Web3AuthLogin";
 
 export default function NavBar() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const navLinkClass = "text-lg flex items-center text-black font-bold h-full";
 
   return (
     <>
-      <Navbar fluid rounded className="top-0 w-full py-4 z-10 bg-[15,16,46] ">
+      <Navbar fluid rounded className="top-0 w-full py-4 z-10 bg-[15,16,46]">
         <Navbar.Brand href="/">
           <Image
             src="/logo.png"
@@ -26,63 +24,31 @@ export default function NavBar() {
         </Navbar.Brand>
 
         <Navbar.Toggle />
-        <Navbar.Collapse>
-          <Navbar.Link
-            href="/"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
+        <Navbar.Collapse className="items-center">
+          <Navbar.Link href="/" className={navLinkClass}>
             Home
           </Navbar.Link>
-          <Navbar.Link
-            href="/"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
+          <Navbar.Link href="/" className={navLinkClass}>
             Join Us
           </Navbar.Link>
-          <Navbar.Link
-            href="/"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
+          <Navbar.Link href="/" className={navLinkClass}>
             Our projects
           </Navbar.Link>
-          <Navbar.Link
-            href="/"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
+          <Navbar.Link href="/" className={navLinkClass}>
             Associations
           </Navbar.Link>
-
-          <Navbar.Link
-            href="#contact"
-            className="text-lg flex justify-left items-center text-black font-bold"
-          >
+          <Navbar.Link href="#contact" className={navLinkClass}>
             Contact
           </Navbar.Link>
-          <Navbar.Link
-            href="/admin"
-            className="text-lg flex justify-left items-center text-green-500 font-bold"
-          >
+          <Navbar.Link href="/admin" className={`${navLinkClass} text-green-500`}>
             ADMIN
           </Navbar.Link>
-
-          {/*<Navbar.Link href="/" onClick={(e) => e.preventDefault()}>
-            <Dropdown
-              label=""
-              dismissOnClick={false}
-              renderTrigger={() => <span className="bg-blue-500 text-white py-2 px-4 rounded-xl text-lg">Login</span>}
-            >
-              <Dropdown.Item>As Association</Dropdown.Item>
-              <Dropdown.Item>As Donator</Dropdown.Item>
-              
-            </Dropdown>
-          </Navbar.Link>*/}
-          <Navbar.Link
-            href="/settings"
-            className="text-lg flex justify-left items-center text-black"
-          >
-            <FontAwesomeIcon icon={faCog} className="mr-4 my-1" />
+          <Navbar.Link href="/settings" className={`${navLinkClass} text-black`}>
+            <FontAwesomeIcon icon={faCog} className="mr-4" />
           </Navbar.Link>
-          <ConnectWallet />
+          <div className="flex items-center h-full">
+            <ConnectWallet />
+          </div>
         </Navbar.Collapse>
       </Navbar>
     </>

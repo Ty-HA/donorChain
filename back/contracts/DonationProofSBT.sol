@@ -71,14 +71,14 @@ contract DonationProofSBT is
 
     /// @notice Sets the base URI for the metadata
     /// @param _newBaseURI The new base URI
-    function setBaseURI(string memory _newBaseURI) public onlyOwner {
+    function setBaseURI(string memory _newBaseURI) external onlyOwner {
         _baseTokenURI = _newBaseURI;
     }
 
     // Add this function to your DonationProofSBT.sol contract
     /// @notice Gets the current base URI for the metadata
     /// @return The current base URI
-    function getBaseURI() public view returns (string memory) {
+    function getBaseURI() external view returns (string memory) {
         return _baseURI();
     }
 

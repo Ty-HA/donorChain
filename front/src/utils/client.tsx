@@ -1,8 +1,9 @@
 import { createPublicClient, http } from "viem";
-import { Chain } from "@rainbow-me/rainbowkit";
-import { hardhat, sepolia} from 'viem/chains';
+import { arbitrumSepolia } from 'viem/chains';
+
+const RPC = process.env.NEXT_PUBLIC_ALCHEMY_RPC || "";
 
 export const publicClient = createPublicClient({
-    chain: sepolia,
-    transport: http(),
+    chain: arbitrumSepolia,
+    transport: http(RPC),
     });
