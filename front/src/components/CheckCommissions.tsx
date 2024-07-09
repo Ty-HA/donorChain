@@ -29,7 +29,7 @@ const CheckCommissions = () => {
 
   return (
 <>
-      <h2 className="text-blue-800 text-2xl font-bold mb-2">
+      <h2 className="text-blue-800 text-3xl font-extrabold mb-4">
         Accumulated Commissions
       </h2>
       

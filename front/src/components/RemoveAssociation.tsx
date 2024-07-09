@@ -67,7 +67,7 @@ const RemoveAssociation = ({ refetch }: RemoveAssociationProps) => {
       <div className="flex flex-col space-y-4">
         <input
           name="associationAddr"
-          placeholder="Association address"
+          placeholder="Association wallet address"
           onChange={(e) => setAssociationAddr(e.target.value)}
           value={associationAddr}
           style={{
@@ -80,7 +80,7 @@ const RemoveAssociation = ({ refetch }: RemoveAssociationProps) => {
         <Button
           onClick={removeAssociation}
           disabled={isConfirming}
-          className="hover:bg-gray-600 bg-gray-700 text-white"
+          className="bg-red-500 hover:bg-red-700 text-white"
           style={{
             border: "1px solid #ccc",
             padding: "8px",

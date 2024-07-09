@@ -5,12 +5,7 @@ import { FaAddressCard, FaUserCircle, FaWallet } from "react-icons/fa";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 import { ethers } from "ethers";
 
-const ProjectTitles: string[] = [
-  "Help Azar to continue his study",
-  "Save Peter life",
-  "Build School for poor students",
-];
-
+// TO DO CHANGE DESCR and CATEGORY IN DYNAMIC DATA IN SMART CONTRACT
 const ProjectDescription: string[] = [
   "Help Azar to continue his study",
   "Save Peter life",
