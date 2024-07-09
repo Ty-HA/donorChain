@@ -84,6 +84,7 @@ const ProjectCard = () => {
   const [selectedContributor, setSelectedContributor] =
     useState<Contributor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [ethPrice, setEthPrice] = useState(0);
 
   useEffect(() => {
     const fetchAssociations = async () => {
@@ -100,7 +101,18 @@ const ProjectCard = () => {
       }
     };
 
+    const fetchEthPrice = async () => {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const data = await response.json();
+        setEthPrice(data.ethereum.usd);
+      } catch (error) {
+        console.error('Error fetching ETH price:', error);
+      }
+    };
+
     fetchAssociations();
+    fetchEthPrice();
   }, []);
 
   const handleContributorClick = (contributor: Contributor) => {
@@ -110,6 +122,10 @@ const ProjectCard = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const formatUSD = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   };
 
   if (isLoading) return <p>Loading associations...</p>;
@@ -188,7 +204,12 @@ const ProjectCard = () => {
                     />
                   </g>
                 </svg>
-                Total raised: {association.balance} ETH
+                <div className="flex items-center justify-center">
+                  <span>{association.balance} ETH</span>
+                  <span className="text-md text-gray-400 pl-2">
+                    ({formatUSD(parseFloat(association.balance) * ethPrice)})
+                  </span>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 w-full mt-auto">
                 <DonateToAssociation

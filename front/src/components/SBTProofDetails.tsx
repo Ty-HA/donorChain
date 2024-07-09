@@ -105,7 +105,7 @@ const SBTProofDetails: React.FC<SBTProofDetailsProps> = ({ donorAddress }) => {
               quality={100}
             />
             <div className="absolute inset-0 flex p-10">
-              <div className="text-amber-100 w-full mt-16">
+              <div className="text-amber-100 w-full mt-12">
                 <h3 className="font-bold text-xl mb-2">
                   Donation Proof #{index + 1}
                 </h3>
