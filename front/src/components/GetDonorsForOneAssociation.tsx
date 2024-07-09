@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { FaUserCircle } from 'react-icons/fa';
 import { Button, Modal } from 'flowbite-react';
-import { contractDonationAddress, contractDonationAbi } from "@/constants";
+import { contractDonationAddress, contractDonationAbi, contractDonationBadgeNFTAddress, contractDonationBadgeNFTAbi } from "@/constants";
 import SBTProofDetails from './SBTProofDetails';
+import BadgeNFTDetails from './BadgeNFTDetail';
 
 interface DonorInfo {
   address: string;
@@ -21,6 +22,8 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
   const [selectedDonor, setSelectedDonor] = useState<string | null>(null);
   const [totalDonation, setTotalDonation] = useState<string>('0');
   const [SBTProof, setSBTProof] = useState<string>('');
+  const [badge, setBadge] = useState<string>('');
+  const [hasBadge, setHasBadge] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAllDonors, setShowAllDonors] = useState(false);
 
@@ -71,7 +74,19 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
   const handleDonorClick = async (donorAddress: string) => {
     setSelectedDonor(donorAddress);
     await fetchTotalDonation(donorAddress);
+    await checkBadges(donorAddress);
     setIsModalOpen(true);
+  };
+
+  const checkBadges = async (donorAddress: string) => {
+    try {
+      const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
+      const contract = new ethers.Contract(contractDonationBadgeNFTAddress, contractDonationBadgeNFTAbi, provider);
+      const badges = await contract.getDonorBadges(donorAddress);
+      setHasBadge(badges.length > 0);
+    } catch (err) {
+      console.error("Error checking badges:", err);
+    }
   };
 
   if (isLoading) return <p className="text-black">Loading donors...</p>;
@@ -104,12 +119,18 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
         <Modal.Body>
           <p className="text-black text-xl">Total Donations: {totalDonation} ETH</p>
           {SBTProof && <SBTProofDetails donorAddress={selectedDonor!} />}
+          {badge && <BadgeNFTDetails donorAddress={selectedDonor!} />}
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setIsModalOpen(false)}>Close</Button>
           <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold" onClick={() => setSBTProof(SBTProof ? '' : 'show')}>
             {SBTProof ? 'Hide SBT proof details' : 'Show SBT proof details'}
           </Button>
+          {hasBadge && (
+            <Button className="bg-[#7633c8] text-white hover:bg-[#341a55] font-bold" onClick={() => setBadge(badge ? '' : 'show')}>
+              {badge ? 'Hide Badge' : 'Show Badge details'}
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </div>
