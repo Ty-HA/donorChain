@@ -8,11 +8,6 @@ interface DonorInfo {
   address: string;
 }
 
-interface DonationInfo {
-  associationAddress: string;
-  amount: string;
-}
-
 interface GetDonorsForOneAssociationProps {
   associationAddress: string;
 }
@@ -23,7 +18,6 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<string | null>(null);
   const [totalDonation, setTotalDonation] = useState<string>('0');
-  const [donationInfo, setDonationInfo] = useState<DonationInfo[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -50,42 +44,23 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
     fetchDonors();
   }, [associationAddress]);
 
-  const fetchDonorInfo = async (donorAddress: string) => {
+  const fetchTotalDonation = async (donorAddress: string) => {
     try {
       const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-      const contractABI = contractDonationAbi;
-      const contractAddress = contractDonationAddress;
-      const contract = new ethers.Contract(contractAddress, contractABI, provider);
+      const contract = new ethers.Contract(contractDonationAddress, contractDonationAbi, provider);
 
       const totalDonationBigNumber = await contract.getTotalDonationsFromOneDonor(donorAddress);
       const totalDonationEther = ethers.formatEther(totalDonationBigNumber);
       setTotalDonation(totalDonationEther);
-
-      const allAssociations = await contract.getWhitelistedAssociations();
-      const donationPromises = allAssociations.map(async (assoc: string) => {
-        const donations = await contract.getDonationsByAssociation(assoc);
-        const donorDonations = donations.filter((d: any) => d.donor === donorAddress);
-        if (donorDonations.length > 0) {
-          const totalAmount = donorDonations.reduce((sum: ethers.BigNumber, d: any) => sum.add(d.amount), ethers.BigNumber.from(0));
-          return {
-            associationAddress: assoc,
-            amount: ethers.formatEther(totalAmount)
-          };
-        }
-        return null;
-      });
-
-      const donationInfo = (await Promise.all(donationPromises)).filter((d): d is DonationInfo => d !== null);
-      setDonationInfo(donationInfo);
     } catch (err) {
-      console.error("Error fetching donor info:", err);
-      setError("Failed to fetch donor information");
+      console.error("Error fetching total donation:", err);
+      setError("Failed to fetch total donation");
     }
   };
 
   const handleDonorClick = async (donorAddress: string) => {
     setSelectedDonor(donorAddress);
-    await fetchDonorInfo(donorAddress);
+    await fetchTotalDonation(donorAddress);
     setIsModalOpen(true);
   };
 
@@ -107,16 +82,7 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
       <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <Modal.Header>Donation Information for {selectedDonor}</Modal.Header>
         <Modal.Body>
-          <p className="text-black font-bold">Total Donations: {totalDonation} ETH</p>
-          <h3 className="text-black font-bold mt-4">Donations by Association:</h3>
-          <ul>
-            {donationInfo.map((info, index) => (
-              <li key={index} className="text-black">
-                <p>Association: {info.associationAddress}</p>
-                <p>Amount: {info.amount} ETH</p>
-              </li>
-            ))}
-          </ul>
+          <p className="text-black">Total Donations: {totalDonation} ETH</p>
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setIsModalOpen(false)}>Close</Button>
