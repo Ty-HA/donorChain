@@ -58,10 +58,8 @@ export default function Admin() {
         <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
           Withdraw My Commissions
         </Button>
-        <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-          Update Association Wallet
-        </Button>
         
+        <h2 className="text-red-500 pt-8 text-3xl">If emergency</h2>
         <Button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
           Pause the Contract
         </Button>

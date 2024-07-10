@@ -1,6 +1,6 @@
 "use client";
 import { useUserRole } from "@/hooks/userRole";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 
@@ -18,6 +18,13 @@ interface DonationRecord {
   blockNumber: string;
 }
 
+interface TransferRecord {
+  recipient: string;
+  amount: string;
+  purpose: string;
+  timestamp: string;
+}
+
 export default function AssociationDashboard() {
   const userRole = useUserRole();
   const [association, setAssociation] = useState<Association | null>(null);
@@ -26,31 +33,23 @@ export default function AssociationDashboard() {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [transfers, setTransfers] = useState<TransferRecord[]>([]);
 
-  useEffect(() => {
-    async function getAddress() {
-      if (typeof window.ethereum !== "undefined") {
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const address = await signer.getAddress();
-          setUserAddress(address);
-        } catch (error) {
-          console.error("Error getting user address:", error);
-        }
+  const getAddress = useCallback(async () => {
+    if (typeof window.ethereum !== "undefined") {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        setUserAddress(address);
+      } catch (error) {
+        console.error("Error getting user address:", error);
       }
     }
-    getAddress();
   }, []);
 
-  useEffect(() => {
-    if (userRole === "association" && userAddress) {
-      fetchAssociationDetails(userAddress);
-      fetchDonations(userAddress);
-    }
-  }, [userRole, userAddress]);
-
-  async function fetchAssociationDetails(address: string) {
+  const fetchAssociationDetails = useCallback(async (address: string) => {
     if (typeof window.ethereum !== "undefined") {
       try {
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -76,9 +75,9 @@ export default function AssociationDashboard() {
         console.error("Error fetching association details:", error);
       }
     }
-  }
+  }, []);
 
-  async function fetchDonations(address: string) {
+  const fetchDonations = useCallback(async (address: string) => {
     if (typeof window.ethereum !== "undefined") {
       try {
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -103,9 +102,65 @@ export default function AssociationDashboard() {
         console.error("Error fetching donations:", error);
       }
     }
-  }
+  }, []);
 
-  async function handleTransferFunds(e: React.FormEvent) {
+  const fetchTransferFunds = useCallback(async () => {
+    if (typeof window.ethereum !== "undefined" && userAddress) {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          contractDonationAddress,
+          contractDonationAbi,
+          provider
+        );
+
+        const currentBlock = await provider.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 50000);
+
+        const filter = contract.filters.FundsTransferred(
+          null,
+          null,
+          null,
+          null
+        );
+        const events = await contract.queryFilter(filter, fromBlock, "latest");
+
+        const formattedTransfers = events
+          .filter((event): event is ethers.EventLog => "args" in event)
+          .map((event) => ({
+            recipient: event.args[0],
+            amount: ethers.formatEther(event.args[1]),
+            purpose: event.args[2],
+            timestamp: new Date(Number(event.args[3]) * 1000).toLocaleString(),
+          }));
+        console.log("Fetching transfers for address:", userAddress);
+        console.log("Events found:", events.length);
+        console.log("Formatted transfers:", formattedTransfers);
+
+        setTransfers(formattedTransfers);
+      } catch (error) {
+        console.error("Error fetching transfer funds:", error);
+      }
+    }
+  }, [userAddress]);
+
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setEvidenceFile(event.target.files[0]);
+    }
+  }, []);
+
+  const handleUploadEvidence = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!evidenceFile) {
+      alert("Please select a file to upload.");
+      return;
+    }
+    console.log("Uploading file:", evidenceFile.name);
+    alert("File uploaded successfully!");
+  }, [evidenceFile]);
+
+  const handleTransferFunds = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (typeof window.ethereum !== "undefined" && userAddress) {
       try {
@@ -123,15 +178,27 @@ export default function AssociationDashboard() {
           purpose
         );
         await tx.wait();
-
         alert("Funds transferred successfully!");
         fetchAssociationDetails(userAddress);
+        fetchTransferFunds();
       } catch (error) {
         console.error("Error transferring funds:", error);
         alert("Error transferring funds. Please try again.");
       }
     }
-  }
+  }, [userAddress, recipient, amount, purpose, fetchAssociationDetails, fetchTransferFunds]);
+
+  useEffect(() => {
+    getAddress();
+  }, [getAddress]);
+
+  useEffect(() => {
+    if (userRole === "association" && userAddress) {
+      fetchAssociationDetails(userAddress);
+      fetchDonations(userAddress);
+      fetchTransferFunds();
+    }
+  }, [userRole, userAddress, fetchAssociationDetails, fetchDonations, fetchTransferFunds]);
 
   if (userRole === "disconnected") {
     return (
@@ -176,20 +243,39 @@ export default function AssociationDashboard() {
         Association Dashboard for {association.name}
       </h1>
       <div>
-        <p className="text-black mb-2 text-xl">
-          <strong>Balance:</strong> {association.balance} ETH
+        <p className="text-black mb-4 text-xl">
+          <strong>Actual Balance: </strong><span className="bg-lime-300">{association.balance} ETH</span>
         </p>
         <p className="text-black mb-2 text-xl">
-          <strong>Last Deposit:</strong> {association.lastDeposit}
+          <strong>Last Donation received:</strong> {association.lastDeposit}
         </p>
         <p className="text-black mb-4 text-xl">
           <strong>Total Donations Received:</strong>{" "}
           {association.totalDonations} ETH
         </p>
 
-        <h2 className="text-black text-xl font-bold mb-2">Transfer Funds</h2>
-        <form onSubmit={handleTransferFunds} className="mb-8">
+        <h2 className="text-blue-800 mb-10 font-bold text-3xl text-center mt-8">
+          Upload Evidence
+        </h2>
+        <form onSubmit={handleUploadEvidence} className="mb-8 text-black">
           <input
+            name="evidenceFile"
+            type="file"
+            onChange={handleFileChange}
+            className="block w-full p-2 mb-2 border rounded"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Upload Evidence
+          </button>
+        </form>
+
+        <h2 className="text-black text-xl font-bold mb-2">Transfer Funds</h2>
+        <form onSubmit={handleTransferFunds} className="mb-8 text-black">
+          <input
+            name="recipient"
             type="text"
             placeholder="Recipient Address"
             value={recipient}
@@ -201,14 +287,14 @@ export default function AssociationDashboard() {
             placeholder="Amount (ETH)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="block w-full p-2 mb-2 border rounded"
+            className="block w-full p-2 mb-2 border rounded text-black"
           />
           <input
             type="text"
             placeholder="Purpose"
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
-            className="block w-full p-2 mb-2 border rounded"
+            className="block w-full p-2 mb-2 border rounded text-black"
           />
           <button
             type="submit"
@@ -218,6 +304,69 @@ export default function AssociationDashboard() {
           </button>
         </form>
       </div>
+
+      <h2 className="text-blue-800 mb-10 font-bold text-3xl text-center mt-8">
+        Invoice Proof
+      </h2>
+      <p className="text-black">
+        The association needs to provide evidence that the artisan completed
+        this estimate.
+      </p>
+      <p className="text-black">
+        Once the estimate is completed by the artisan, the association can
+        upload a photo of the invoice as proof.
+      </p>
+      <p className="text-black">
+        After uploading the invoice, the association will be able to transfer
+        funds, and DonorChain will generate a PDF on IPFS as proof of the
+        transaction.
+      </p>
+      <p className="text-black">
+        This procedure will enhance transparency on the blockchain for donors.
+      </p>
+
+      <h2 className="text-blue-800 mb-10 font-bold text-3xl text-center mt-8">
+        Recent Transfers
+      </h2>
+      <table className="w-full text-black border-collapse border-blue-500">
+        <thead>
+          <tr>
+            <th className="text-left text-xl border p-2 border-blue-500">
+              Recipient
+            </th>
+            <th className="text-left text-xl border p-2 border-blue-500">
+              Amount
+            </th>
+            <th className="text-left text-xl border p-2 border-blue-500">
+              Purpose
+            </th>
+            <th className="text-left text-xl border p-2 border-blue-500">
+              Date
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {transfers.map((transfer, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0 ? "bg-gray-200" : ""
+              } border-blue-500`}
+            >
+              <td className="border p-2 border-blue-500">
+                {transfer.recipient}
+              </td>
+              <td className="border p-2 border-blue-500">
+                {transfer.amount} ETH
+              </td>
+              <td className="border p-2 border-blue-500">{transfer.purpose}</td>
+              <td className="border p-2 border-blue-500">
+                {transfer.timestamp}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <h2 className="text-blue-800 mb-10 font-bold text-3xl text-center mt-8">
         Recent Donations

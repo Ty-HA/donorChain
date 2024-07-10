@@ -88,7 +88,8 @@ const DonationTimeline: React.FC = () => {
 
   return (
     <section id="totalDonations" className="w-full">
-      <h2 className="text-3xl font-bold text-white pt-10 text-center">
+      <h1 className="text-xl text-white pt-10 text-center">Vizualisation idea if we have many donations and associations</h1>
+      <h2 className="text-3xl font-bold text-white pt-6 text-center">
         Total donations on DonorChain (6 months): {totalDonations.toFixed(2)}{" "}
         ETH
       </h2>
