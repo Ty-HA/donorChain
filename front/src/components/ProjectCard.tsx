@@ -115,6 +115,20 @@ const ProjectCard = () => {
     fetchEthPrice();
   }, []);
 
+  const refreshAssociations = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedAssociations = await getWhitelistedAssociations();
+      setAssociations(fetchedAssociations);
+    } catch (err) {
+      setError("Failed to fetch associations");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleContributorClick = (contributor: Contributor) => {
     setSelectedContributor(contributor);
     setIsModalOpen(true);

@@ -1,5 +1,5 @@
 export const contractDonationBadgeNFTAddress =
-  "0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2";
+  "0x0298C54F9F2428bE8A536768153fc334e5b68D6b";
 
 export const contractDonationBadgeNFTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
@@ -206,8 +206,8 @@ export const contractDonationBadgeNFTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "uint256", name: "", type: "uint256" },
     ],
     name: "approve",
     outputs: [],
@@ -233,6 +233,13 @@ export const contractDonationBadgeNFTAbi = [
     name: "balanceOf",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
+    name: "burn",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -371,10 +378,10 @@ export const contractDonationBadgeNFTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "from", type: "address" },
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
-      { internalType: "bytes", name: "data", type: "bytes" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "bytes", name: "", type: "bytes" },
     ],
     name: "safeTransferFrom",
     outputs: [],
@@ -383,8 +390,8 @@ export const contractDonationBadgeNFTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "operator", type: "address" },
-      { internalType: "bool", name: "approved", type: "bool" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "bool", name: "", type: "bool" },
     ],
     name: "setApprovalForAll",
     outputs: [],
@@ -446,9 +453,9 @@ export const contractDonationBadgeNFTAbi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "from", type: "address" },
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "uint256", name: "", type: "uint256" },
     ],
     name: "transferFrom",
     outputs: [],

@@ -57,67 +57,72 @@ describe("Donation", function () {
     };
   }
 
-    describe("setBadgeContract", function () {
-      it("should set the badge contract address correctly", async function () {
-        const { donation, owner } = await loadFixture(deployDonationFixture);
-  
-        // Deploy DonationBadgeNFT
-        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
-        const badgeNFT = await DonationBadgeNFT.deploy();
-        await badgeNFT.waitForDeployment();
-  
-        const badgeNFTAddress = await badgeNFT.getAddress();
-  
-        // Set the badge contract
-        await donation.connect(owner).setBadgeContract(badgeNFTAddress);
-  
-        // Check if the badge contract was set correctly
-        const setBadgeContractAddress = await donation.badgeContract();
-        expect(setBadgeContractAddress).to.equal(badgeNFTAddress);
-      });
-  
-      it("should emit BadgeContractSet event", async function () {
-        const { donation, owner } = await loadFixture(deployDonationFixture);
-  
-        // Deploy DonationBadgeNFT
-        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
-        const badgeNFT = await DonationBadgeNFT.deploy();
-        await badgeNFT.waitForDeployment();
-  
-        const badgeNFTAddress = await badgeNFT.getAddress();
-  
-        // Check if the event is emitted
-        await expect(donation.connect(owner).setBadgeContract(badgeNFTAddress))
-          .to.emit(donation, "BadgeContractSet")
-          .withArgs(badgeNFTAddress);
-      });
-  
-      it("should revert when called by non-owner", async function () {
-        const { donation, donor1 } = await loadFixture(deployDonationFixture);
-  
-        // Deploy DonationBadgeNFT
-        const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
-        const badgeNFT = await DonationBadgeNFT.deploy();
-        await badgeNFT.waitForDeployment();
-  
-        const badgeNFTAddress = await badgeNFT.getAddress();
-  
-        // Try to set the badge contract with a non-owner account
-        await expect(donation.connect(donor1).setBadgeContract(badgeNFTAddress))
+  describe("setBadgeContract", function () {
+    it("should set the badge contract address correctly", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      // Deploy DonationBadgeNFT
+      const DonationBadgeNFT = await ethers.getContractFactory(
+        "DonationBadgeNFT"
+      );
+      const badgeNFT = await DonationBadgeNFT.deploy();
+      await badgeNFT.waitForDeployment();
+
+      const badgeNFTAddress = await badgeNFT.getAddress();
+
+      // Set the badge contract
+      await donation.connect(owner).setBadgeContract(badgeNFTAddress);
+
+      // Check if the badge contract was set correctly
+      const setBadgeContractAddress = await donation.badgeContract();
+      expect(setBadgeContractAddress).to.equal(badgeNFTAddress);
+    });
+
+    it("should emit BadgeContractSet event", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      // Deploy DonationBadgeNFT
+      const DonationBadgeNFT = await ethers.getContractFactory(
+        "DonationBadgeNFT"
+      );
+      const badgeNFT = await DonationBadgeNFT.deploy();
+      await badgeNFT.waitForDeployment();
+
+      const badgeNFTAddress = await badgeNFT.getAddress();
+
+      // Check if the event is emitted
+      await expect(donation.connect(owner).setBadgeContract(badgeNFTAddress))
+        .to.emit(donation, "BadgeContractSet")
+        .withArgs(badgeNFTAddress);
+    });
+
+    it("should revert when called by non-owner", async function () {
+      const { donation, donor1 } = await loadFixture(deployDonationFixture);
+
+      // Deploy DonationBadgeNFT
+      const DonationBadgeNFT = await ethers.getContractFactory(
+        "DonationBadgeNFT"
+      );
+      const badgeNFT = await DonationBadgeNFT.deploy();
+      await badgeNFT.waitForDeployment();
+
+      const badgeNFTAddress = await badgeNFT.getAddress();
+
+      // Try to set the badge contract with a non-owner account
+      await expect(donation.connect(donor1).setBadgeContract(badgeNFTAddress))
         .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
         .withArgs(donor1.address);
-      });
-  
-      it("should revert when setting zero address", async function () {
-        const { donation, owner } = await loadFixture(deployDonationFixture);
-  
-        // Try to set the zero address
-        await expect(donation.connect(owner).setBadgeContract(ethers.ZeroAddress))
-          .to.be.revertedWith("Invalid badge contract address");
-      });
     });
-  
 
+    it("should revert when setting zero address", async function () {
+      const { donation, owner } = await loadFixture(deployDonationFixture);
+
+      // Try to set the zero address
+      await expect(
+        donation.connect(owner).setBadgeContract(ethers.ZeroAddress)
+      ).to.be.revertedWith("Invalid badge contract address");
+    });
+  });
 
   it("should deploy the Donation contract successfully", async function () {
     const { donation, sbt } = await loadFixture(deployDonationFixture);
@@ -474,63 +479,59 @@ describe("Donation", function () {
       const { donation, owner, asso1 } = await loadFixture(
         deployDonationFixture
       );
-  
+
       await donation
         .connect(owner)
         .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  
+
       const newName = "New Asso Name";
       await expect(
-        donation
-          .connect(owner)
-          .updateAssociationName(asso1.address, newName)
+        donation.connect(owner).updateAssociationName(asso1.address, newName)
       )
         .to.emit(donation, "AssociationNameUpdated")
         .withArgs(asso1.address, newName);
-  
+
       const associationDetails = await donation.getAssociationDetails(
         asso1.address
       );
       expect(associationDetails[0]).to.equal(newName);
     });
-  
+
     it("should not allow non-owner to update association name", async function () {
       const { donation, owner, asso1, donor1 } = await loadFixture(
         deployDonationFixture
       );
-  
+
       await donation
         .connect(owner)
         .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  
+
       await expect(
         donation
           .connect(donor1)
           .updateAssociationName(asso1.address, "New Name")
       ).to.be.reverted;
     });
-  
+
     it("should not allow updating name of non-whitelisted association", async function () {
       const { donation, owner, asso1 } = await loadFixture(
         deployDonationFixture
       );
-  
+
       await expect(
-        donation
-          .connect(owner)
-          .updateAssociationName(asso1.address, "New Name")
+        donation.connect(owner).updateAssociationName(asso1.address, "New Name")
       ).to.be.revertedWith("Association not whitelisted");
     });
-  
+
     it("should not allow updating to an empty name", async function () {
       const { donation, owner, asso1 } = await loadFixture(
         deployDonationFixture
       );
-  
+
       await donation
         .connect(owner)
         .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  
+
       await expect(
         donation.connect(owner).updateAssociationName(asso1.address, "")
       ).to.be.revertedWith("Invalid Name");
@@ -621,6 +622,87 @@ describe("Donation", function () {
           .connect(owner)
           .updateAssociationPostalAddr(asso3.address, "New Address 3")
       ).to.not.be.reverted;
+    });
+
+    it("should not allow removing an association with remaining balance", async function () {
+      const { donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture);
+    
+      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      
+      // Faire un don à l'association
+      const donationAmount = ethers.parseEther("1");
+      console.log("Donation amount:", donationAmount.toString());
+      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+    
+      // Tenter de supprimer l'association avec un solde
+      await expect(donation.connect(owner).removeAssociation(asso1.address))
+        .to.be.revertedWith("Association has remaining funds. Please withdraw before removing.");
+    });
+    
+    it("should allow removing an association after withdrawing all funds", async function () {
+      const { donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture);
+    
+      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      
+      const donationAmount = ethers.parseEther("1");
+      console.log("Donation amount:", donationAmount.toString());
+      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+    
+      const recipient = ethers.Wallet.createRandom();
+    
+      // transfer all funds to recipient
+      const amountToTransfer = donationAmount; 
+      await donation.connect(asso1).transferFunds(
+        recipient.address,
+        amountToTransfer,
+        "Withdrawal of all funds"
+      );
+    
+      // Maintenant, la suppression devrait réussir
+      await expect(donation.connect(owner).removeAssociation(asso1.address))
+        .to.emit(donation, "AssociationRemoved")
+        .withArgs(asso1.address);
+    });
+
+    it("should reset association whitelisted status when removing", async function () {
+      const { donation, owner, asso1 } = await loadFixture(deployDonationFixture);
+    
+      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation.connect(owner).removeAssociation(asso1.address);
+    
+      const associationDetails = await donation.getAssociationDetails(asso1.address);
+      console.log("Association details:", associationDetails);
+    
+      // Supposons que whitelisted soit le 4ème élément du tableau (index 3)
+      expect(associationDetails[3]).to.be.false;
+    });
+
+    it("should allow re-adding a previously removed association", async function () {
+      const { donation, owner, asso1 } = await loadFixture(
+        deployDonationFixture
+      );
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation.connect(owner).removeAssociation(asso1.address);
+
+      // Re-add the association
+      await expect(
+        donation
+          .connect(owner)
+          .addAssociation(asso1.address, "Asso1 New", "456 New St", "RNA456")
+      )
+        .to.emit(donation, "AssociationAdded")
+        .withArgs(asso1.address, "Asso1 New", "456 New St", "RNA456");
+
+      const associationDetails = await donation.getAssociationDetails(
+        asso1.address
+      );
+      expect(associationDetails[0]).to.equal("Asso1 New");
+      expect(associationDetails[1]).to.equal("456 New St");
+      expect(associationDetails[2]).to.equal("RNA456");
+      expect(associationDetails[3]).to.be.true; // whitelisted should be true
     });
   });
 
@@ -860,27 +942,40 @@ describe("Donation", function () {
       ).to.be.reverted;
     });
     it("should mint badge when threshold is reached", async function () {
-      const { donation, asso1, donor1 } = await loadFixture(deployDonationFixture);
+      const { donation, asso1, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
 
       // Deploy and set DonationBadgeNFT
-      const DonationBadgeNFT = await ethers.getContractFactory("DonationBadgeNFT");
+      const DonationBadgeNFT = await ethers.getContractFactory(
+        "DonationBadgeNFT"
+      );
       const badgeNFT = await DonationBadgeNFT.deploy();
       await badgeNFT.waitForDeployment();
       await donation.setBadgeContract(await badgeNFT.getAddress());
       await badgeNFT.setDonationContract(await donation.getAddress());
 
       // Whitelist the association
-      await donation.addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation.addAssociation(
+        asso1.address,
+        "Asso1",
+        "123 Main St",
+        "RNA123"
+      );
 
       const donationAmount = ethers.parseEther("0.2"); // Above BRONZE_THRESHOLD
 
       // Make the donation
-      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
 
       // Check badge minting
       expect(await badgeNFT.balanceOf(donor1.address)).to.equal(1);
       expect(await badgeNFT.getDonorHighestTier(donor1.address)).to.equal(1); // Bronze tier
-  });
+    });
   });
 
   describe("transferFunds", function () {
@@ -1324,7 +1419,10 @@ describe("Donation", function () {
     it("should revert if SBT contract is not set", async function () {
       // Deploy a new Donation contract with zero address for SBT
       const Donation = await ethers.getContractFactory("Donation");
-      const newDonation = await Donation.deploy(ethers.ZeroAddress, owner.address);
+      const newDonation = await Donation.deploy(
+        ethers.ZeroAddress,
+        owner.address
+      );
 
       await expect(newDonation.getDonationProofDetails(1)).to.be.revertedWith(
         "SBT contract not set"
@@ -2243,115 +2341,149 @@ describe("Donation", function () {
     let donation, owner, asso1, asso2, nonAssociation;
 
     beforeEach(async function () {
-        ({ donation, owner, asso1, asso2 } = await loadFixture(deployDonationFixture));
+      ({ donation, owner, asso1, asso2 } = await loadFixture(
+        deployDonationFixture
+      ));
 
-        nonAssociation = ethers.Wallet.createRandom().address;
+      nonAssociation = ethers.Wallet.createRandom().address;
 
-        // Whitelist the associations
-        await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-        await donation.connect(owner).addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
-        
-        // Supprimez toutes les associations avant chaque test pour avoir un état initial propre
-        const currentAssociations = await donation.getWhitelistedAssociations();
-        for (const association of currentAssociations) {
-            await donation.connect(owner).removeAssociation(association);
-        }
+      // Whitelist the associations
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+
+      // Supprimez toutes les associations avant chaque test pour avoir un état initial propre
+      const currentAssociations = await donation.getWhitelistedAssociations();
+      for (const association of currentAssociations) {
+        await donation.connect(owner).removeAssociation(association);
+      }
     });
-  
-    it("should return an array containing all whitelisted associations", async function () {
-      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-      await donation.connect(owner).addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
 
-      const whitelistedAssociations = await donation.getWhitelistedAssociations();
-      expect(whitelistedAssociations).to.include.members([asso1.address, asso2.address]);
-  });
-  
+    it("should return an array containing all whitelisted associations", async function () {
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      await donation
+        .connect(owner)
+        .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
+
+      const whitelistedAssociations =
+        await donation.getWhitelistedAssociations();
+      expect(whitelistedAssociations).to.include.members([
+        asso1.address,
+        asso2.address,
+      ]);
+    });
+
     it("should not include non-whitelisted addresses in the returned array", async function () {
-      const whitelistedAssociations = await donation.getWhitelistedAssociations();
+      const whitelistedAssociations =
+        await donation.getWhitelistedAssociations();
       expect(whitelistedAssociations).to.not.include(nonAssociation);
     });
-  
+
     it("should return an empty array if no associations are whitelisted", async function () {
-      const whitelistedAssociations = await donation.getWhitelistedAssociations();
+      const whitelistedAssociations =
+        await donation.getWhitelistedAssociations();
       expect(whitelistedAssociations).to.be.an("array").that.is.empty;
-  });
+    });
   });
 
   describe("getAssociationDetails", function () {
     let donation, owner, asso1, nonAssociation;
 
     beforeEach(async function () {
-        ({ donation, owner, asso1 } = await loadFixture(deployDonationFixture));
+      ({ donation, owner, asso1 } = await loadFixture(deployDonationFixture));
 
-        nonAssociation = ethers.Wallet.createRandom().address;
+      nonAssociation = ethers.Wallet.createRandom().address;
 
-        // Whitelist the association
-        await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
     });
 
     it("should return the details of a whitelisted association", async function () {
-        const details = await donation.getAssociationDetails(asso1.address);
-        expect(details[0]).to.equal("Asso1");
-        expect(details[1]).to.equal("123 Main St");
-        expect(details[2]).to.equal("RNA123");
-        expect(details[3]).to.be.true;
+      const details = await donation.getAssociationDetails(asso1.address);
+      expect(details[0]).to.equal("Asso1");
+      expect(details[1]).to.equal("123 Main St");
+      expect(details[2]).to.equal("RNA123");
+      expect(details[3]).to.be.true;
     });
 
     it("should return default values for a non-whitelisted association", async function () {
-        const details = await donation.getAssociationDetails(nonAssociation);
-        expect(details[0]).to.equal("");
-        expect(details[1]).to.equal("");
-        expect(details[2]).to.equal("");
-        expect(details[3]).to.be.false;
+      const details = await donation.getAssociationDetails(nonAssociation);
+      expect(details[0]).to.equal("");
+      expect(details[1]).to.equal("");
+      expect(details[2]).to.equal("");
+      expect(details[3]).to.be.false;
     });
-});
-describe("Pause and Unpause", function () {
-  let donation, owner, asso1, donor1;
+  });
+  describe("Pause and Unpause", function () {
+    let donation, owner, asso1, donor1;
 
-  beforeEach(async function () {
-      ({ donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture));
+    beforeEach(async function () {
+      ({ donation, owner, asso1, donor1 } = await loadFixture(
+        deployDonationFixture
+      ));
 
       // Whitelist the associations
       await donation
-          .connect(owner)
-          .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  });
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+    });
 
-  it("should allow the owner to pause the contract", async function () {
+    it("should allow the owner to pause the contract", async function () {
       await donation.connect(owner).pause();
       const paused = await donation.paused();
       expect(paused).to.be.true;
-  });
+    });
 
-  it("should not allow a non-owner to pause the contract", async function () {
-      await expect(donation.connect(donor1).pause()).to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount").withArgs(donor1.address);
-  });
+    it("should not allow a non-owner to pause the contract", async function () {
+      await expect(donation.connect(donor1).pause())
+        .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+        .withArgs(donor1.address);
+    });
 
-  it("should allow the owner to unpause the contract", async function () {
+    it("should allow the owner to unpause the contract", async function () {
       await donation.connect(owner).pause();
       await donation.connect(owner).unpause();
       const paused = await donation.paused();
       expect(paused).to.be.false;
-  });
+    });
 
-  it("should not allow a non-owner to unpause the contract", async function () {
+    it("should not allow a non-owner to unpause the contract", async function () {
       await donation.connect(owner).pause();
-      await expect(donation.connect(donor1).unpause()).to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount").withArgs(donor1.address);
-  });
+      await expect(donation.connect(donor1).unpause())
+        .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+        .withArgs(donor1.address);
+    });
 
-  it("should not allow function calls protected by whenNotPaused when the contract is paused", async function () {
+    it("should not allow function calls protected by whenNotPaused when the contract is paused", async function () {
       await donation.connect(owner).pause();
       const donationAmount = ethers.parseEther("1");
-      await expect(donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount }))
-          .to.be.revertedWithCustomError(donation, "EnforcedPause");
-  });
+      await expect(
+        donation
+          .connect(donor1)
+          .donateToAssociation(asso1.address, donationAmount, {
+            value: donationAmount,
+          })
+      ).to.be.revertedWithCustomError(donation, "EnforcedPause");
+    });
 
-  it("should allow function calls protected by whenNotPaused when the contract is unpaused", async function () {
+    it("should allow function calls protected by whenNotPaused when the contract is unpaused", async function () {
       await donation.connect(owner).pause();
       await donation.connect(owner).unpause();
       const donationAmount = ethers.parseEther("1");
-      await expect(donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount }))
-          .to.not.be.reverted;
+      await expect(
+        donation
+          .connect(donor1)
+          .donateToAssociation(asso1.address, donationAmount, {
+            value: donationAmount,
+          })
+      ).to.not.be.reverted;
+    });
   });
-});
 });

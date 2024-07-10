@@ -252,29 +252,37 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         emit AssociationNameUpdated(_addr, _newName);
     }
 
-    /// @notice Removes an association from the whitelist
-    /// @param _association The address of the association to remove
-    function removeAssociation(address _association) external onlyOwner {
-        require(
-            associations[_association].whitelisted,
-            "Association not whitelisted"
-        );
+   function removeAssociation(address _association) external onlyOwner {
+    require(
+        associations[_association].whitelisted,
+        "Association not whitelisted"
+    );
 
-        uint256 index = associationId[_association];
-        uint256 lastIndex = associationList.length - 1;
-        address lastAssociation = associationList[lastIndex];
-
-        associationList[index] = lastAssociation;
-        associationId[lastAssociation] = index;
-
-        associationList.pop();
-        delete associationId[_association];
-
-        // Reset association details
-        associations[_association].whitelisted = false;
-
-        emit AssociationRemoved(_association);
+    uint256 balance = associations[_association].balance;
+    if (balance > 0) {
+        // If the association has remaining funds, prevent removal
+        revert("Association has remaining funds. Please withdraw before removing.");
     }
+
+    uint256 index = associationId[_association];
+    uint256 lastIndex = associationList.length - 1;
+    address lastAssociation = associationList[lastIndex];
+
+    associationList[index] = lastAssociation;
+    associationId[lastAssociation] = index;
+
+    associationList.pop();
+    delete associationId[_association];
+
+    // Reset association details
+    associations[_association].whitelisted = false;
+    // Reset association balance
+    associations[_association].balance = 0;
+
+    emit AssociationRemoved(_association);
+    delete associations[_association];
+
+}
 
     // ::::::::::::: DONATION MANAGEMENT ::::::::::::: //
 
@@ -285,7 +293,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     function donateToAssociation(
         address _association,
         uint256 _amount
-    ) public payable nonReentrant whenNotPaused {
+    ) external payable nonReentrant whenNotPaused {
         require(_amount > 0, "Donation amount must be greater than zero");
         require(
             msg.value == _amount,

@@ -117,7 +117,7 @@ npx hardhat test
 npx hardhat coverage
 ```
 
- 223 passing (20s)
+  227 passing (19s)
 
 -----------------------|----------|----------|----------|----------|----------------|
 File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
