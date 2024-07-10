@@ -56,22 +56,53 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 cd DonorChain/back
 npx hardhat compile
 npx hardhat node
-npx hardhat run scripts/deploy.js --network sepolia
+npx hardhat run scripts/deploy.js --network arbitrumSepolia
 ```
 Deploy script was written to deploy and verify my 3 contracts
-It needed 0.9 sepoliaETH
+
 ```
+Compiled 21 Solidity files successfully (evm target: paris).
 Deploying contracts with the account: 0x8E9B6101776469f4F5e57d509fee35751dBbA54A
-DonationProofSBT deployed to: 0x4f2288bDe7714d7c6b577DA35ff2883ad8c2f0FC
-DonationBadgeNFT deployed to: 0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2
-Donation deployed to: 0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a
+DonationProofSBT deployed to: 0xBbE0F111A9E9BE1644340370990d029af1E4281A
+DonationBadgeNFT deployed to: 0x0298C54F9F2428bE8A536768153fc334e5b68D6b
+Donation deployed to: 0x523b18de0c95c32459B7dE3F21E93943646Cac4b
 Donation contract address set in DonationProofSBT contract
 Donation contract address set in DonationBadgeNFT contract
+Verifying contracts on Arbiscan...
+Successfully submitted source code for contract
+contracts/DonationProofSBT.sol:DonationProofSBT at 0xBbE0F111A9E9BE1644340370990d029af1E4281A
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract DonationProofSBT on the block explorer.
+https://sepolia.arbiscan.io/address/0xBbE0F111A9E9BE1644340370990d029af1E4281A#code
+
+Successfully submitted source code for contract
+contracts/DonationBadgeNFT.sol:DonationBadgeNFT at 0x0298C54F9F2428bE8A536768153fc334e5b68D6b
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract DonationBadgeNFT on the block explorer.
+https://sepolia.arbiscan.io/address/0x0298C54F9F2428bE8A536768153fc334e5b68D6b#code
+
+Successfully submitted source code for contract
+contracts/Donation.sol:Donation at 0x523b18de0c95c32459B7dE3F21E93943646Cac4b
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract Donation on the block explorer.
+https://sepolia.arbiscan.io/address/0x523b18de0c95c32459B7dE3F21E93943646Cac4b#code
+
+Contracts verified on Arbiscan
+Verification:
+SBT contract in Donation: 0xBbE0F111A9E9BE1644340370990d029af1E4281A
+Badge contract in Donation: 0x0298C54F9F2428bE8A536768153fc334e5b68D6b
+Donation contract in SBT: 0x523b18de0c95c32459B7dE3F21E93943646Cac4b
+Donation contract in Badge: 0x523b18de0c95c32459B7dE3F21E93943646Cac4b
+All addresses are correctly set!
+Deployment, verification, and initialization complete!
 ```
 Check the deployed smart contracts here:
-https://sepolia.arbiscan.io/address/0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a
-https://sepolia.arbiscan.io/address/0x4f2288bDe7714d7c6b577DA35ff2883ad8c2f0FC
-https://sepolia.arbiscan.io/address/0xf25345c6F753bec06634DABBEE1B15e8bfFDf3c2
+https://sepolia.arbiscan.io/address/0x523b18de0c95c32459B7dE3F21E93943646Cac4b#code
+https://sepolia.arbiscan.io/address/0xBbE0F111A9E9BE1644340370990d029af1E4281A#code
+https://sepolia.arbiscan.io/address/0x0298C54F9F2428bE8A536768153fc334e5b68D6b#code
 
 
 
@@ -86,18 +117,19 @@ npx hardhat test
 npx hardhat coverage
 ```
 
-  196 passing (17s)
+ 223 passing (20s)
 
 -----------------------|----------|----------|----------|----------|----------------|
 File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 -----------------------|----------|----------|----------|----------|----------------|
- contracts\            |      100 |    90.63 |      100 |      100 |                |
-  Donation.sol         |      100 |    93.06 |      100 |      100 |                |
-  DonationBadgeNFT.sol |      100 |    96.43 |      100 |      100 |                |
+ contracts\            |      100 |    89.86 |      100 |      100 |                |
+  Donation.sol         |      100 |    93.59 |      100 |      100 |                |
+  DonationBadgeNFT.sol |      100 |    90.63 |      100 |      100 |                |
   DonationProofSBT.sol |      100 |    78.57 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
-All files              |      100 |    90.63 |      100 |      100 |                |
+All files              |      100 |    89.86 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
+
 ### License
 DonorChain is open source and available under the MIT license.
 

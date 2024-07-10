@@ -214,6 +214,7 @@ contract DonationProofSBT is
         require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
         require(_exists(_tokenId), "Token does not exist");
         _burn(_tokenId);
+        delete donationProofs[_tokenId];
     }
 
     /// @notice Check if a token exists
