@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, Button, Modal } from "flowbite-react";
-import { FaAddressCard, FaUserCircle, FaWallet } from "react-icons/fa";
+import { FaAddressCard, FaWallet } from "react-icons/fa";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
 import DonateToAssociation from "./DonateToAssociation";
 import GetDonorsForOneAssociation from "./GetDonorsForOneAssociation";
@@ -40,7 +40,16 @@ interface Association {
   rnaNumber: string;
   addedDate: string;
   balance: string;
+  totalDonations: string;
 }
+
+interface DonationRecord {
+  donor: string;
+  amount: string;
+  timestamp: string;
+  blockNumber: string;
+}
+
 
 async function getWhitelistedAssociations() {
   const provider = new ethers.JsonRpcProvider(
@@ -57,6 +66,7 @@ async function getWhitelistedAssociations() {
     const associationsDetails = await Promise.all(
       associationAddresses.map(async (address: string) => {
         const details = await contract.associations(address);
+        const totalDonations = await contract.getTotalDonationsToAssociation(address);
         return {
           address,
           name: details.name,
@@ -66,6 +76,7 @@ async function getWhitelistedAssociations() {
             Number(details.lastDeposit) * 1000
           ).toLocaleDateString(),
           balance: ethers.formatEther(details.balance),
+          totalDonations: ethers.formatEther(totalDonations),
         };
       })
     );
@@ -79,12 +90,40 @@ async function getWhitelistedAssociations() {
 
 const ProjectCard = () => {
   const [associations, setAssociations] = useState<Association[]>([]);
+  const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedContributor, setSelectedContributor] =
     useState<Contributor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ethPrice, setEthPrice] = useState(0);
+
+  const fetchDonations = useCallback(async (address: string) => {
+    if (typeof window.ethereum !== "undefined") {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          contractDonationAddress,
+          contractDonationAbi,
+          provider
+        );
+        const donationRecords = await contract.getDonationsByAssociation(
+          address
+        );
+
+        const formattedDonations = donationRecords.map((record: any) => ({
+          donor: record.donor,
+          amount: ethers.formatEther(record.amount),
+          timestamp: new Date(Number(record.timestamp) * 1000).toLocaleString(),
+          blockNumber: record.blockNumber.toString(),
+        }));
+
+        setDonations(formattedDonations);
+      } catch (error) {
+        console.error("Error fetching donations:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchAssociations = async () => {
@@ -93,6 +132,7 @@ const ProjectCard = () => {
       try {
         const fetchedAssociations = await getWhitelistedAssociations();
         setAssociations(fetchedAssociations);
+       
       } catch (err) {
         setError("Failed to fetch associations");
         console.error(err);
@@ -114,6 +154,22 @@ const ProjectCard = () => {
     fetchAssociations();
     fetchEthPrice();
   }, []);
+
+  
+
+  const refreshAssociations = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedAssociations = await getWhitelistedAssociations();
+      setAssociations(fetchedAssociations);
+    } catch (err) {
+      setError("Failed to fetch associations");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleContributorClick = (contributor: Contributor) => {
     setSelectedContributor(contributor);
@@ -160,6 +216,9 @@ const ProjectCard = () => {
                 <FaAddressCard className="mr-2" />
                 {association.postalAddress}
               </p>
+              <p className="text-black text-md flex items-center">
+               RNA Number: {association.rnaNumber}
+              </p>
               <p className="text-xl font-normal text-black dark:text-gray-400 flex-grow mt-4 mb-4">
                 {ProjectDescription[index] || "No description available."}
               </p>
@@ -205,10 +264,15 @@ const ProjectCard = () => {
                   </g>
                 </svg>
                 <div className="flex items-center justify-center">
-                  <span>{association.balance} ETH</span>
+                  <div className="flex flex-col">
+                  <span className="text-xs">Total donations</span>
+                  <div className="flex">
+                  <span>{association.totalDonations} ETH</span>
                   <span className="text-md text-gray-400 pl-2">
-                    ({formatUSD(parseFloat(association.balance) * ethPrice)})
+                    ({formatUSD(parseFloat(association.totalDonations) * ethPrice)})
                   </span>
+                  </div>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 w-full mt-auto">

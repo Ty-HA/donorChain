@@ -34,7 +34,7 @@ const GetContractBalance = () => {
 
   return (
     <>
-      <h2 className="text-blue-800 text-3xl font-extrabold mb-4 mt-10">Contract Balance</h2>
+      <h2 className="text-blue-800 text-3xl font-extrabold mb-4 pt-10">Contract Balance</h2>
       <div className="mb-4 p-4 border rounded-lg shadow-sm">
       <p className="text-lg text-black">{balance} ETH</p>
     </div>

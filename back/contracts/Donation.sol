@@ -54,6 +54,13 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         uint256 blockNumber;
     }
 
+    struct TransferRecord {
+        address recipient;
+        uint256 amount;
+        string purpose;
+        uint256 timestamp;
+    }
+
     /// @notice The total amount of amount donated to the contract
     uint256 private accumulatedCommissions;
 
@@ -69,6 +76,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     mapping(address => uint256) public totalDonationsToAssociation;
     /// @notice A mapping of donations made to each association
     mapping(address => DonationRecord[]) public donationsByAssociation;
+    /// @notice A mapping of transfers made by each association
+    mapping(address => TransferRecord[]) private associationTransfers;
 
     /// @notice An array of whitelisted associations
     address[] public associationList;
@@ -236,7 +245,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         emit AssociationUpdated(_addr, _newPostalAddress);
     }
 
-        /// @notice Update association information if they want to change their name
+    /// @notice Update association information if they want to change their name
     /// @param _addr The wallet address of the association
     /// @param _newName The new name of the association
     function updateAssociationName(
@@ -252,13 +261,19 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         emit AssociationNameUpdated(_addr, _newName);
     }
 
-    /// @notice Removes an association from the whitelist
-    /// @param _association The address of the association to remove
     function removeAssociation(address _association) external onlyOwner {
         require(
             associations[_association].whitelisted,
             "Association not whitelisted"
         );
+
+        uint256 balance = associations[_association].balance;
+        if (balance > 0) {
+            // If the association has remaining funds, prevent removal
+            revert(
+                "Association has remaining funds. Please withdraw before removing."
+            );
+        }
 
         uint256 index = associationId[_association];
         uint256 lastIndex = associationList.length - 1;
@@ -272,8 +287,11 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
 
         // Reset association details
         associations[_association].whitelisted = false;
+        // Reset association balance
+        associations[_association].balance = 0;
 
         emit AssociationRemoved(_association);
+        delete associations[_association];
     }
 
     // ::::::::::::: DONATION MANAGEMENT ::::::::::::: //
@@ -285,7 +303,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     function donateToAssociation(
         address _association,
         uint256 _amount
-    ) public payable nonReentrant whenNotPaused {
+    ) external payable nonReentrant whenNotPaused {
         require(_amount > 0, "Donation amount must be greater than zero");
         require(
             msg.value == _amount,
@@ -381,6 +399,10 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             _purpose,
             block.timestamp,
             block.number
+        );
+
+        associationTransfers[msg.sender].push(
+            TransferRecord(_recipient, _amount, _purpose, block.timestamp)
         );
     }
 
@@ -502,6 +524,15 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _association
     ) external view returns (DonationRecord[] memory) {
         return donationsByAssociation[_association];
+    }
+
+    /// @notice Get the list of transfers made by a specific association
+    /// @param _association The address of the association
+    /// @return An array of transfers made by the specified association
+    function getTransfersByAssociation(
+        address _association
+    ) external view returns (TransferRecord[] memory) {
+        return associationTransfers[_association];
     }
 
     /// @notice Retrieves the list of whitelisted associations

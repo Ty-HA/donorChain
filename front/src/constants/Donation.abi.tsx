@@ -1,5 +1,5 @@
 export const contractDonationAddress =
-  "0xcA4e8168ea780ABFe2EAC9d34a6e078156F5cf5a";
+  "0x523b18de0c95c32459B7dE3F21E93943646Cac4b";
 
 export const contractDonationAbi = [
   {
@@ -70,6 +70,20 @@ export const contractDonationAbi = [
       },
     ],
     name: "AssociationAddrUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "association",
+        type: "address",
+      },
+      { indexed: false, internalType: "string", name: "name", type: "string" },
+    ],
+    name: "AssociationNameUpdated",
     type: "event",
   },
   {
@@ -590,6 +604,16 @@ export const contractDonationAbi = [
   {
     inputs: [],
     name: "unpause",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_addr", type: "address" },
+      { internalType: "string", name: "_newName", type: "string" },
+    ],
+    name: "updateAssociationName",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
