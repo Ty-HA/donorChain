@@ -43,9 +43,7 @@ export default function NavBar() {
           <Navbar.Link href="/admin" className={`${navLinkClass} text-green-500`}>
             ADMIN
           </Navbar.Link>
-          <Navbar.Link href="/settings" className={`${navLinkClass} text-black`}>
-            <FontAwesomeIcon icon={faCog} className="mr-4" />
-          </Navbar.Link>
+         
           <div className="flex items-center h-full">
             <ConnectWallet />
           </div>
