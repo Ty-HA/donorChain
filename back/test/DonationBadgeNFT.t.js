@@ -208,11 +208,17 @@ describe("DonationBadgeNFT", function () {
 
     describe("setTierURI", function () {
       it("should return the correct URI for a minted badge", async function () {
-        
-        await donation.connect(donor1).donateToAssociation(asso1.address, ethers.parseEther("0.5"), { value: ethers.parseEther("0.5") });
+        await donation
+          .connect(donor1)
+          .donateToAssociation(asso1.address, ethers.parseEther("0.5"), {
+            value: ethers.parseEther("0.5"),
+          });
 
         const badges = await badge.getDonorBadges(donor1.address);
-        expect(badges.length).to.be.greaterThan(0, "No badges found for the donor");
+        expect(badges.length).to.be.greaterThan(
+          0,
+          "No badges found for the donor"
+        );
 
         const badgeId = badges[0];
 
@@ -220,9 +226,10 @@ describe("DonationBadgeNFT", function () {
         const tokenUri = await badge.tokenURI(badgeId);
         console.log("Token URI:", tokenUri); // Afficher l'URI pour vérifier
 
-        expect(tokenUri).to.equal("ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/silver.json");
-    });
-
+        expect(tokenUri).to.equal(
+          "ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/silver.json"
+        );
+      });
     });
 
     describe("setTierURI", function () {
@@ -336,6 +343,303 @@ describe("DonationBadgeNFT", function () {
         expect(await badge.getTierName(2)).to.equal("Silver");
         expect(await badge.getTierName(3)).to.equal("Gold");
       });
+    });
+  });
+  describe("Transfer Restrictions", function () {
+    let sbt, donation, owner, donor1, donor2, asso1;
+    let tokenId;
+
+    beforeEach(async function () {
+      ({ sbt, donation, owner, donor1, donor2, asso1 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      // Check if the association is already whitelisted
+      const associationDetails = await donation.getAssociationDetails(
+        asso1.address
+      );
+      if (!associationDetails[3]) {
+        // Assuming the fourth element is the whitelisted status
+        // Whitelist the association only if it's not already whitelisted
+        await donation
+          .connect(owner)
+          .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      }
+
+      // Make a donation to mint a token
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      // Get the token ID
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      tokenId = tokens[0];
+    });
+
+    it("should not allow transfer to contract address", async function () {
+      const donationAddress = await donation.getAddress();
+      expect(donationAddress).to.be.properAddress;
+
+      await expect(
+        sbt
+          .connect(donor1)
+          .transferFrom(donor1.address, donationAddress, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not allow approval to zero address", async function () {
+      const tokenId = 0; // Assuming this token exists
+      await expect(
+        sbt.connect(donor1).approve(ethers.ZeroAddress, tokenId)
+      ).to.be.revertedWith("SBT tokens do not support approvals");
+    });
+
+    it("should not allow transferFrom", async function () {
+      await expect(
+        sbt
+          .connect(donor1)
+          .transferFrom(donor1.address, donor2.address, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not allow safeTransferFrom without data", async function () {
+      await expect(
+        sbt
+          .connect(donor1)
+          ["safeTransferFrom(address,address,uint256)"](
+            donor1.address,
+            donor2.address,
+            tokenId
+          )
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not allow safeTransferFrom with data", async function () {
+      await expect(
+        sbt
+          .connect(donor1)
+          ["safeTransferFrom(address,address,uint256,bytes)"](
+            donor1.address,
+            donor2.address,
+            tokenId,
+            "0x"
+          )
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not allow approve", async function () {
+      await expect(
+        sbt.connect(donor1).approve(donor2.address, tokenId)
+      ).to.be.revertedWith("SBT tokens do not support approvals");
+    });
+
+    it("should not allow setApprovalForAll", async function () {
+      await expect(
+        sbt.connect(donor1).setApprovalForAll(donor2.address, true)
+      ).to.be.revertedWith("SBT tokens do not support approvals");
+    });
+
+    it("should not allow owner to transfer", async function () {
+      await expect(
+        sbt.connect(owner).transferFrom(donor1.address, donor2.address, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+    });
+
+    it("should not change ownership after transfer attempt", async function () {
+      await expect(
+        sbt
+          .connect(donor1)
+          .transferFrom(donor1.address, donor2.address, tokenId)
+      ).to.be.revertedWith("SBT tokens are not transferable");
+
+      expect(await sbt.ownerOf(tokenId)).to.equal(donor1.address);
+    });
+  });
+
+  describe("Transfer and approval restrictions", function () {
+    let badge, donor1, donor2, tokenId;
+  
+    beforeEach(async function () {
+      const { badge: badgeContract, donation, asso1, donor1: donor1Address, donor2: donor2Address } = await loadFixture(deployDonationFixture);
+      badge = badgeContract;
+      donor1 = donor1Address;
+      donor2 = donor2Address;
+  
+      // Mint a badge for donor1
+      const donationAmount = ethers.parseEther("1");
+      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
+      const tokens = await badge.getDonorBadges(donor1.address);
+      tokenId = tokens[0];
+    });
+  
+    it("should not allow safeTransferFrom", async function () {
+      await expect(badge.connect(donor1)["safeTransferFrom(address,address,uint256)"](donor1.address, donor2.address, tokenId))
+        .to.be.revertedWith("SBT tokens are not transferable");
+    });
+  
+    it("should not allow safeTransferFrom with data", async function () {
+      await expect(badge.connect(donor1)["safeTransferFrom(address,address,uint256,bytes)"](donor1.address, donor2.address, tokenId, "0x"))
+        .to.be.revertedWith("SBT tokens are not transferable");
+    });
+  
+    it("should not allow transferFrom", async function () {
+      await expect(badge.connect(donor1).transferFrom(donor1.address, donor2.address, tokenId))
+        .to.be.revertedWith("SBT tokens are not transferable");
+    });
+  
+    it("should not allow approve", async function () {
+      await expect(badge.connect(donor1).approve(donor2.address, tokenId))
+        .to.be.revertedWith("SBT tokens do not support approvals");
+    });
+  
+    it("should not allow setApprovalForAll", async function () {
+      await expect(badge.connect(donor1).setApprovalForAll(donor2.address, true))
+        .to.be.revertedWith("SBT tokens do not support approvals");
+    });
+  });
+
+  describe("burn", function () {
+    let donation, sbt, owner, donor1, donor2, asso, asso1;
+    let tokenId;
+    let assoCounter = 0;
+
+    beforeEach(async function () {
+      ({ donation, sbt, owner, donor1, donor2, asso1 } = await loadFixture(
+        deployDonationFixture
+      ));
+
+      // Create a new association for each test
+      [, , , , asso] = await ethers.getSigners();
+      assoCounter++;
+      const assoName = `Asso${assoCounter}`;
+      const assoAddress = `123 Main St #${assoCounter}`;
+      const assoRNA = `RNA${assoCounter}`;
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso.address, assoName, assoAddress, assoRNA);
+
+      // Make a donation to mint a token
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      // Get the token ID
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      tokenId = tokens[0];
+    });
+
+    it("should burn a token", async function () {
+      const { badge, donation, asso1, donor1 } = await loadFixture(deployDonationFixture);
+      const donationAmount = ethers.parseEther("1");
+    
+      // Donate to association
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+    
+      // Get donor's tokens and select the first token
+      const tokens = await badge.getDonorBadges(donor1.address);
+      expect(tokens.length).to.be.greaterThan(0, "No badge minted");
+      const tokenId = tokens[0];
+    
+      // Verify the badge exists before burning
+      const [tierBefore, ] = await badge.getBadgeDetails(tokenId);
+      expect(tierBefore).to.not.equal(0, "Badge should exist before burning");
+    
+      // Burn the token
+      await badge.connect(donor1).burn(tokenId);
+    
+      // Verify that the badge is deleted
+      await expect(badge.ownerOf(tokenId)).to.be.reverted;
+      await expect(badge.getBadgeDetails(tokenId)).to.be.revertedWith("Badge does not exist");
+    });
+
+    it("should allow the token owner to burn their token", async function () {
+      await expect(sbt.connect(donor1).burn(tokenId)).to.not.be.reverted;
+
+      // Check that the token no longer exists
+      await expect(sbt.ownerOf(tokenId))
+        .to.be.revertedWithCustomError(sbt, "ERC721NonexistentToken")
+        .withArgs(tokenId);
+    });
+
+    it("should not allow non-owners to burn the token", async function () {
+      await expect(sbt.connect(donor2).burn(tokenId)).to.be.revertedWith(
+        "Only token owner can burn"
+      );
+    });
+
+    it("should revert when trying to burn a non-existent token", async function () {
+      const nonExistentTokenId = 9999;
+      await expect(sbt.connect(donor1).burn(nonExistentTokenId))
+        .to.be.revertedWithCustomError(sbt, "ERC721NonexistentToken")
+        .withArgs(nonExistentTokenId);
+    });
+
+    it("should update the donor's token balance after burning", async function () {
+      const balanceBefore = await sbt.balanceOf(donor1.address);
+      await sbt.connect(donor1).burn(tokenId);
+      const balanceAfter = await sbt.balanceOf(donor1.address);
+
+      expect(balanceAfter).to.equal(balanceBefore - 1n);
+    });
+
+    it("should remove the burned token from getDonorTokens", async function () {
+      await sbt.connect(donor1).burn(tokenId);
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      expect(tokens).to.not.include(tokenId);
+    });
+
+    it("should emit a Transfer event to the zero address when burning", async function () {
+      await expect(sbt.connect(donor1).burn(tokenId))
+        .to.emit(sbt, "Transfer")
+        .withArgs(donor1.address, ethers.ZeroAddress, tokenId);
+    });
+
+    it("should allow burning multiple tokens", async function () {
+      // Mint another token
+      const donationAmount = ethers.parseEther("1");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso.address, donationAmount, {
+          value: donationAmount,
+        });
+
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      expect(tokens.length).to.equal(2);
+
+      // Burn both tokens
+      await sbt.connect(donor1).burn(tokens[0]);
+      await sbt.connect(donor1).burn(tokens[1]);
+
+      const remainingTokens = await sbt.getDonorTokens(donor1.address);
+      expect(remainingTokens.length).to.equal(0);
+    });
+    it("should correctly return tokens after burning some in the middle", async function () {
+      // Mint 4 tokens
+      for (let i = 0; i < 4; i++) {
+        await donation
+          .connect(donor1)
+          .donateToAssociation(asso1.address, ethers.parseEther("1"), {
+            value: ethers.parseEther("1"),
+          });
+      }
+
+      // Burn tokens 1 and 3
+      await sbt.connect(donor1).burn(1);
+      await sbt.connect(donor1).burn(3);
+
+      const tokens = await sbt.getDonorTokens(donor1.address);
+      expect(tokens).to.deep.equal([0n, 2n, 4n]);
     });
   });
 });

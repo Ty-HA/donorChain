@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title DonationBadgeNFT
@@ -41,11 +42,16 @@ contract DonationBadgeNFT is ERC721, Ownable {
     event TierURIUpdated(Tier indexed tier, string newURI);
 
     constructor() ERC721("DonationBadge", "DBADGE") Ownable(msg.sender) {
-    string memory baseURI = "ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/";
-    tierURIs[Tier.Bronze] = string(abi.encodePacked(baseURI, "bronze.json"));
-    tierURIs[Tier.Silver] = string(abi.encodePacked(baseURI, "silver.json"));
-    tierURIs[Tier.Gold] = string(abi.encodePacked(baseURI, "gold.json"));
-}
+        string
+            memory baseURI = "ipfs://Qme5rXhq2i3hfhEoM8YbUQfu96YDQ89mhBgUufKPga6AUN/metadata/";
+        tierURIs[Tier.Bronze] = string(
+            abi.encodePacked(baseURI, "bronze.json")
+        );
+        tierURIs[Tier.Silver] = string(
+            abi.encodePacked(baseURI, "silver.json")
+        );
+        tierURIs[Tier.Gold] = string(abi.encodePacked(baseURI, "gold.json"));
+    }
 
     modifier onlyDonationContract() {
         require(
@@ -147,7 +153,7 @@ contract DonationBadgeNFT is ERC721, Ownable {
     /// @param _tokenId  The token ID of the badge
     /// @return A boolean indicating if the badge exists
     function _exists(uint256 _tokenId) internal view returns (bool) {
-        return _tokenId < _nextTokenId;
+        return _ownerOf(_tokenId) != address(0);
     }
 
     /// @notice Get the details of a badge
@@ -175,5 +181,45 @@ contract DonationBadgeNFT is ERC721, Ownable {
         if (_tier == Tier.Silver) return "Silver";
         if (_tier == Tier.Bronze) return "Bronze";
         return "None";
+    }
+
+    // ::::::::::::: TRANSFER OVERRIDE ::::::::::::: //
+
+    /// @notice block safe transfers with data
+    function safeTransferFrom(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override(ERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+    /// @notice block native transfers
+    function transferFrom(
+        address,
+        address,
+        uint256
+    ) public virtual override(ERC721) {
+        revert("SBT tokens are not transferable");
+    }
+
+    /// @notice block approvals
+    function approve(address, uint256) public virtual override(ERC721) {
+        revert("SBT tokens do not support approvals");
+    }
+
+    /// @notice block setApprovalForAll
+    function setApprovalForAll(address, bool) public virtual override(ERC721) {
+        revert("SBT tokens do not support approvals");
+    }
+
+    /// @notice Burn a token
+    /// @param _tokenId The token ID to burn
+    function burn(uint256 _tokenId) external {
+        require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
+        require(_exists(_tokenId), "Badge does not exist");
+        _burn(_tokenId);
+        delete badges[_tokenId];
     }
 }

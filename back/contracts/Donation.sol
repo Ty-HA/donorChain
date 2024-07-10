@@ -91,6 +91,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     );
 
     event AssociationUpdated(address indexed association, string postalAddress);
+    event AssociationNameUpdated(address indexed association, string name);
 
     event DonationReceived(
         address indexed donor,
@@ -233,6 +234,22 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         associations[_addr].postalAddress = _newPostalAddress;
 
         emit AssociationUpdated(_addr, _newPostalAddress);
+    }
+
+        /// @notice Update association information if they want to change their name
+    /// @param _addr The wallet address of the association
+    /// @param _newName The new name of the association
+    function updateAssociationName(
+        address _addr,
+        string memory _newName
+    ) external onlyOwner {
+        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(bytes(_newName).length > 0, "Invalid Name");
+
+        // Update the association's postal address
+        associations[_addr].name = _newName;
+
+        emit AssociationNameUpdated(_addr, _newName);
     }
 
     /// @notice Removes an association from the whitelist

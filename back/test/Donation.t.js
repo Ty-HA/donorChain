@@ -469,6 +469,74 @@ describe("Donation", function () {
     });
   });
 
+  describe("updateAssociationName", function () {
+    it("should allow owner to update association name", async function () {
+      const { donation, owner, asso1 } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  
+      const newName = "New Asso Name";
+      await expect(
+        donation
+          .connect(owner)
+          .updateAssociationName(asso1.address, newName)
+      )
+        .to.emit(donation, "AssociationNameUpdated")
+        .withArgs(asso1.address, newName);
+  
+      const associationDetails = await donation.getAssociationDetails(
+        asso1.address
+      );
+      expect(associationDetails[0]).to.equal(newName);
+    });
+  
+    it("should not allow non-owner to update association name", async function () {
+      const { donation, owner, asso1, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  
+      await expect(
+        donation
+          .connect(donor1)
+          .updateAssociationName(asso1.address, "New Name")
+      ).to.be.reverted;
+    });
+  
+    it("should not allow updating name of non-whitelisted association", async function () {
+      const { donation, owner, asso1 } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      await expect(
+        donation
+          .connect(owner)
+          .updateAssociationName(asso1.address, "New Name")
+      ).to.be.revertedWith("Association not whitelisted");
+    });
+  
+    it("should not allow updating to an empty name", async function () {
+      const { donation, owner, asso1 } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  
+      await expect(
+        donation.connect(owner).updateAssociationName(asso1.address, "")
+      ).to.be.revertedWith("Invalid Name");
+    });
+  });
+
   describe("removeAssociation", function () {
     it("should allow owner to remove an association", async function () {
       const { donation, owner, asso1, asso2 } = await loadFixture(

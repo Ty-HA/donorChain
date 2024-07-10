@@ -51,7 +51,7 @@ async function main() {
     constructorArguments: [await donationProofSBT.getAddress(), await donationBadgeNFT.getAddress()],
   });
 
-  console.log("Contracts verified on Etherscan");
+  console.log("Contracts verified on Arbiscan");
 
   // Verify that all configurations are set correctly
   const sbtContractInDonation = await donation.sbtContract();
