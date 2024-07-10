@@ -1237,6 +1237,88 @@ describe("Donation", function () {
           .transferFunds(recipient.address, amount, purpose)
       ).to.be.revertedWithCustomError(donation, "EnforcedPause");
     });
+    it("should correctly record transfer in associationTransfers", async function () {
+      const { donation, donor1, asso1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+  
+      const transferAmount = ethers.parseEther("1");
+      const purpose = "Test transfer";
+  
+      // Perform the transfer
+      await donation
+        .connect(asso1)
+        .transferFunds(recipient.address, transferAmount, purpose);
+  
+      // Get the transfers for the association
+      const transfers = await donation.getTransfersByAssociation(asso1.address);
+  
+      // Check that the transfer was recorded correctly
+      expect(transfers.length).to.equal(1);
+      expect(transfers[0].recipient).to.equal(recipient.address);
+      expect(transfers[0].amount).to.equal(transferAmount);
+      expect(transfers[0].purpose).to.equal(purpose);
+      expect(transfers[0].timestamp).to.be.closeTo(
+        BigInt(Math.floor(Date.now() / 1000)),
+        BigInt(60)
+      ); // Allow 60 seconds of difference
+    });
+  
+    it("should correctly record multiple transfers", async function () {
+      const { donation, donor1, asso1, recipient, owner } = await loadFixture(
+        deployDonationFixture
+      );
+  
+      // Whitelist the association
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+  
+      // Fund the contract
+      const fundAmount = ethers.parseEther("10");
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
+  
+      // Perform multiple transfers
+      for (let i = 0; i < 3; i++) {
+        const transferAmount = ethers.parseEther("1");
+        const purpose = `Test transfer ${i + 1}`;
+  
+        await donation
+          .connect(asso1)
+          .transferFunds(recipient.address, transferAmount, purpose);
+      }
+  
+      // Get the transfers for the association
+      const transfers = await donation.getTransfersByAssociation(asso1.address);
+  
+      // Check that all transfers were recorded correctly
+      expect(transfers.length).to.equal(3);
+      for (let i = 0; i < 3; i++) {
+        expect(transfers[i].recipient).to.equal(recipient.address);
+        expect(transfers[i].amount).to.equal(ethers.parseEther("1"));
+        expect(transfers[i].purpose).to.equal(`Test transfer ${i + 1}`);
+      }
+    });
+  
+    it("should return empty array for association with no transfers", async function () {
+      const { donation, asso1 } = await loadFixture(deployDonationFixture);
+  
+      const transfers = await donation.getTransfersByAssociation(asso1.address);
+      expect(transfers.length).to.equal(0);
+    });
   });
 
   describe("withdrawCommission", function () {
