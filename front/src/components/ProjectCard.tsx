@@ -174,6 +174,9 @@ const ProjectCard = () => {
                 <FaAddressCard className="mr-2" />
                 {association.postalAddress}
               </p>
+              <p className="text-black text-md flex items-center">
+               Number of donations: {association.rnaNumber}
+              </p>
               <p className="text-xl font-normal text-black dark:text-gray-400 flex-grow mt-4 mb-4">
                 {ProjectDescription[index] || "No description available."}
               </p>
@@ -219,6 +222,7 @@ const ProjectCard = () => {
                   </g>
                 </svg>
                 <div className="flex items-center justify-center">
+                 
                   <span>{association.balance} ETH</span>
                   <span className="text-md text-gray-400 pl-2">
                     ({formatUSD(parseFloat(association.balance) * ethPrice)})

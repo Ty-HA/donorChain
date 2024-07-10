@@ -1,11 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "flowbite-react";
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-} from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { contractDonationAddress, contractDonationAbi } from "@/constants";
+import { ethers } from "ethers";
 
 type RemoveAssociationProps = {
   refetch: () => void;
@@ -21,9 +19,42 @@ const RemoveAssociation = ({ refetch }: RemoveAssociationProps) => {
       hash,
     });
 
+  const checkAssociationBalance = async (address: string) => {
+    try {
+      const provider = new ethers.JsonRpcProvider(
+        "https://sepolia-rollup.arbitrum.io/rpc"
+      );
+      const contract = new ethers.Contract(
+        contractDonationAddress,
+        contractDonationAbi,
+        provider
+      );
+      const associationDetails = await contract.getAssociationDetails(address);
+      return associationDetails.balance;
+    } catch (error) {
+      console.error("Error checking association balance:", error);
+      return null;
+    }
+  };
+
   const removeAssociation = async () => {
     if (!associationAddr) {
       alert("Please enter the association address");
+      return;
+    }
+
+    const balance = await checkAssociationBalance(associationAddr);
+    console.log("Balance:", balance);
+    if (balance === null) {
+      alert("Error checking association balance. Please try again.");
+      return;
+    }
+
+    if (balance > BigInt(0)) {
+      const balanceInEth = ethers.formatEther(balance);
+      alert(
+        `Cannot remove association with remaining balance. Remaining balance = ${balanceInEth} ETH. Please withdraw all funds first.`
+      );
       return;
     }
 
