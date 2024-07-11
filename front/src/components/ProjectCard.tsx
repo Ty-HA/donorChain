@@ -50,7 +50,6 @@ interface DonationRecord {
   blockNumber: string;
 }
 
-
 async function getWhitelistedAssociations() {
   const provider = new ethers.JsonRpcProvider(
     "https://sepolia-rollup.arbitrum.io/rpc"
@@ -66,7 +65,9 @@ async function getWhitelistedAssociations() {
     const associationsDetails = await Promise.all(
       associationAddresses.map(async (address: string) => {
         const details = await contract.associations(address);
-        const totalDonations = await contract.getTotalDonationsToAssociation(address);
+        const totalDonations = await contract.getTotalDonationsToAssociation(
+          address
+        );
         return {
           address,
           name: details.name,
@@ -132,7 +133,6 @@ const ProjectCard = () => {
       try {
         const fetchedAssociations = await getWhitelistedAssociations();
         setAssociations(fetchedAssociations);
-       
       } catch (err) {
         setError("Failed to fetch associations");
         console.error(err);
@@ -143,19 +143,19 @@ const ProjectCard = () => {
 
     const fetchEthPrice = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+        );
         const data = await response.json();
         setEthPrice(data.ethereum.usd);
       } catch (error) {
-        console.error('Error fetching ETH price:', error);
+        console.error("Error fetching ETH price:", error);
       }
     };
 
     fetchAssociations();
     fetchEthPrice();
   }, []);
-
-  
 
   const refreshAssociations = async () => {
     setIsLoading(true);
@@ -181,7 +181,10 @@ const ProjectCard = () => {
   };
 
   const formatUSD = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
   };
 
   if (isLoading) return <p>Loading associations...</p>;
@@ -193,7 +196,7 @@ const ProjectCard = () => {
         Your help is Needed
       </h2>
 
-      <section className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2 pt-10 sm:px-32 px-4 w-full">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-10 px-4 sm:px-6 lg:px-8 w-full">
         {associations.map((association, index) => (
           <div key={index} className="flex flex-col">
             <Card
@@ -201,23 +204,23 @@ const ProjectCard = () => {
               className="flex flex-col h-full border-2 border-gray-300"
             >
               <div className="flex justify-between items-center">
-                <h5 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                <h5 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
                   {association.name}
                 </h5>
                 <span className="text-xs font-semibold mr-2 px-2.5 py-0.5 rounded bg-blue-300 text-blue-800 text-center">
                   {ProjectCategories[index] || "Category"}
                 </span>
               </div>
-              <p className="text-black text-md flex items-center">
-                <FaWallet className="mr-2" />
-                {association.address}
+              <p className=" text-black flex items-center break-all">
+                <FaWallet className="mr-2 flex-shrink-0" />
+                <span className="truncate text-md md:text-md text-black ">{association.address}</span>
               </p>
               <p className="text-black text-md flex items-center">
                 <FaAddressCard className="mr-2" />
                 {association.postalAddress}
               </p>
               <p className="text-black text-md flex items-center">
-               RNA Number: {association.rnaNumber}
+                RNA Number: {association.rnaNumber}
               </p>
               <p className="text-xl font-normal text-black dark:text-gray-400 flex-grow mt-4 mb-4">
                 {ProjectDescription[index] || "No description available."}
@@ -265,13 +268,17 @@ const ProjectCard = () => {
                 </svg>
                 <div className="flex items-center justify-center">
                   <div className="flex flex-col">
-                  <span className="text-xs">Total donations</span>
-                  <div className="flex">
-                  <span>{association.totalDonations} ETH</span>
-                  <span className="text-md text-gray-400 pl-2">
-                    ({formatUSD(parseFloat(association.totalDonations) * ethPrice)})
-                  </span>
-                  </div>
+                    <span className="text-xs">Total donations</span>
+                    <div className="flex">
+                      <span>{association.totalDonations} ETH</span>
+                      <span className="text-md text-gray-400 pl-2">
+                        (
+                        {formatUSD(
+                          parseFloat(association.totalDonations) * ethPrice
+                        )}
+                        )
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -284,11 +291,11 @@ const ProjectCard = () => {
                   Share
                 </Button>
               </div>
-              <div className="h-20 overflow-y-auto my-4">
-              <GetDonorsForOneAssociation
-                associationAddress={association.address}
-                maxDonors={3}
-              />
+              <div className="h-24 sm:h-24 overflow-y-auto my-2 sm:my-4">
+                <GetDonorsForOneAssociation
+                  associationAddress={association.address}
+                  maxDonors={3}
+                />
               </div>
             </Card>
           </div>

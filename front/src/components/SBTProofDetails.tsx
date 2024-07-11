@@ -93,40 +93,41 @@ const SBTProofDetails: React.FC<SBTProofDetailsProps> = ({ donorAddress }) => {
           className="mt-8 max-w-4xl mx-auto overflow-hidden bg-white"
         >
           <div
-            className="relative w-full"
+            className="relative w-full h-[300px] sm:h-[400px] md:h-[420px]"
             style={{ maxWidth: "800px", margin: "0 auto" }}
           >
             <Image
               src={SBT_BACKGROUND_IMAGE}
               alt="SBT Background"
-              width={600}
-              height={420}
-              layout="responsive"
+              // width={600}
+              // height={420}
+              layout="fill"
+              objectFit="cover"
               quality={100}
             />
-            <div className="absolute inset-0 flex p-10">
-              <div className="text-amber-100 w-full mt-12">
-                <h3 className="font-bold text-xl mb-2">
+            <div className="absolute inset-0 flex p-2 md:p-10">
+              <div className="text-amber-100 w-full md:mt-12 mt-14">
+                <h3 className="font-bold md:text-2xl text-xs mb-0 text-center md:text-left">
                   Donation Proof #{index + 1}
                 </h3>
                 <div className="flex flex-col">
                   <p>
-                    <span className="font-semibold">Donor:</span>
+                    <span className="font-semibold text-sm md:text-xl">Donor:</span>
                   </p>
-                  <p className="mb-2 text-sm">{proof.donor}</p>
+                  <p className="md:mb-2 mb-0 text-sm md:text-md truncate">{proof.donor}</p>
 
-                  <p className="mb-2">
-                  <span className="font-semibold">Amount:</span> {proof.amount} ETH
+                  <p className="md:mb-2 mb-0">
+                  <span className="font-semibold text-sm md:text-xl">Amount:</span> {proof.amount} ETH
                   </p>
 
                   <p>
-                    <span className="font-semibold">Association:</span>
+                    <span className="font-semibold text-sm md:text-xl">Association:</span>
                   </p>
-                  <p className="mb-2 text-sm">{proof.association}</p>
+                  <p className="md:mb-2 mb-1 text-sm truncate">{proof.association}</p>
 
-                  <p className="mb-2"><span className="font-semibold ">Date:</span> {proof.timestamp}</p>
+                  <p className="md:mb-2 mb-1 text-sm md:text-xl"><span className="font-semibold text-sm md:text-xl">Date:</span> {proof.timestamp}</p>
 
-                  <p className=""><span className="font-semibold ">Block:</span> {proof.blockNumber}</p>
+                  <p className="text-sm md:text-xl"><span className="font-semibold text-sm md:text-xl">Block:</span> {proof.blockNumber}</p>
                 </div>
               </div>
             </div>

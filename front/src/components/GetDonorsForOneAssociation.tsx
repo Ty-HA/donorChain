@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { FaUserCircle } from 'react-icons/fa';
-import { Button, Modal } from 'flowbite-react';
-import { contractDonationAddress, contractDonationAbi, contractDonationBadgeNFTAddress, contractDonationBadgeNFTAbi } from "@/constants";
-import SBTProofDetails from './SBTProofDetails';
-import BadgeNFTDetails from './BadgeNFTDetail';
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { FaUserCircle } from "react-icons/fa";
+import { Button, Modal } from "flowbite-react";
+import {
+  contractDonationAddress,
+  contractDonationAbi,
+  contractDonationBadgeNFTAddress,
+  contractDonationBadgeNFTAbi,
+} from "@/constants";
+import SBTProofDetails from "./SBTProofDetails";
+import BadgeNFTDetails from "./BadgeNFTDetail";
 
 interface DonorInfo {
   address: string;
@@ -15,14 +20,17 @@ interface GetDonorsForOneAssociationProps {
   maxDonors?: number;
 }
 
-const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({ associationAddress, maxDonors = 3 }) => {
+const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
+  associationAddress,
+  maxDonors = 3,
+}) => {
   const [donors, setDonors] = useState<DonorInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<string | null>(null);
-  const [totalDonation, setTotalDonation] = useState<string>('0');
-  const [SBTProof, setSBTProof] = useState<string>('');
-  const [badge, setBadge] = useState<string>('');
+  const [totalDonation, setTotalDonation] = useState<string>("0");
+  const [SBTProof, setSBTProof] = useState<string>("");
+  const [badge, setBadge] = useState<string>("");
   const [hasBadge, setHasBadge] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAllDonors, setShowAllDonors] = useState(false);
@@ -32,20 +40,28 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
       setIsLoading(true);
       setError(null);
       try {
-        const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-        const contract = new ethers.Contract(contractDonationAddress, contractDonationAbi, provider);
+        const provider = new ethers.JsonRpcProvider(
+          "https://sepolia-rollup.arbitrum.io/rpc"
+        );
+        const contract = new ethers.Contract(
+          contractDonationAddress,
+          contractDonationAbi,
+          provider
+        );
 
-        const donationRecords = await contract.getDonationsByAssociation(associationAddress);
-        
+        const donationRecords = await contract.getDonationsByAssociation(
+          associationAddress
+        );
+
         const uniqueDonorsMap: { [key: string]: boolean } = {};
         donationRecords.forEach((record: any) => {
           if (record.donor) {
             uniqueDonorsMap[record.donor] = true;
           }
         });
-        
+
         const uniqueDonors = Object.keys(uniqueDonorsMap);
-        setDonors(uniqueDonors.map(address => ({ address })));
+        setDonors(uniqueDonors.map((address) => ({ address })));
       } catch (err) {
         console.error("Error fetching donors:", err);
         setError("Failed to fetch donors");
@@ -59,10 +75,17 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
 
   const fetchTotalDonation = async (donorAddress: string) => {
     try {
-      const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-      const contract = new ethers.Contract(contractDonationAddress, contractDonationAbi, provider);
+      const provider = new ethers.JsonRpcProvider(
+        "https://sepolia-rollup.arbitrum.io/rpc"
+      );
+      const contract = new ethers.Contract(
+        contractDonationAddress,
+        contractDonationAbi,
+        provider
+      );
 
-      const totalDonationBigNumber = await contract.getTotalDonationsFromOneDonor(donorAddress);
+      const totalDonationBigNumber =
+        await contract.getTotalDonationsFromOneDonor(donorAddress);
       const totalDonationEther = ethers.formatEther(totalDonationBigNumber);
       setTotalDonation(totalDonationEther);
     } catch (err) {
@@ -80,8 +103,14 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
 
   const checkBadges = async (donorAddress: string) => {
     try {
-      const provider = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc");
-      const contract = new ethers.Contract(contractDonationBadgeNFTAddress, contractDonationBadgeNFTAbi, provider);
+      const provider = new ethers.JsonRpcProvider(
+        "https://sepolia-rollup.arbitrum.io/rpc"
+      );
+      const contract = new ethers.Contract(
+        contractDonationBadgeNFTAddress,
+        contractDonationBadgeNFTAbi,
+        provider
+      );
       const badges = await contract.getDonorBadges(donorAddress);
       setHasBadge(badges.length > 0);
     } catch (err) {
@@ -99,14 +128,18 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
       <h2 className="text-black text-xl mb-2">Recent Donors:</h2>
       <ul>
         {displayedDonors.map((donor, index) => (
-          <li key={index} className="text-black text-md flex items-center cursor-pointer" onClick={() => handleDonorClick(donor.address)}>
+          <li
+            key={index}
+            className="text-black text-md sm:text-md flex items-center cursor-pointer pb-2 sm:p-0"
+            onClick={() => handleDonorClick(donor.address)}
+          >
             <FaUserCircle className="mr-2" />
-            {donor.address}
+            <span className="truncate">{donor.address}</span>
           </li>
         ))}
       </ul>
       {donors.length > maxDonors && !showAllDonors && (
-        <div 
+        <div
           className="text-sm text-blue-600 cursor-pointer hover:underline mt-1"
           onClick={() => setShowAllDonors(true)}
         >
@@ -114,21 +147,37 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
         </div>
       )}
 
-      <Modal className="bg-black w-full" show={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Modal.Header><h2 className="font-bold">Donation Information for</h2> {selectedDonor} </Modal.Header>
+      <Modal
+        className="bg-black w-full"
+        show={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      >
+        <Modal.Header>
+          <h2 className="font-bold">Donation Information for</h2>
+          <span className="truncate text-xs md:text-base">{selectedDonor}</span>
+        </Modal.Header>
         <Modal.Body>
-          <p className="text-black text-xl">Total Donations: {totalDonation} ETH</p>
+          <p className="text-black text-xl">
+            Total Donations:{" "}
+            <span className="bg-lime-300">{totalDonation} ETH</span>
+          </p>
           {SBTProof && <SBTProofDetails donorAddress={selectedDonor!} />}
           {badge && <BadgeNFTDetails donorAddress={selectedDonor!} />}
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setIsModalOpen(false)}>Close</Button>
-          <Button className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold" onClick={() => setSBTProof(SBTProof ? '' : 'show')}>
-            {SBTProof ? 'Hide SBT proof details' : 'Show SBT proof details'}
+          <Button
+            className="bg-[#4fd92c] text-white hover:bg-green-700 font-bold text-xs sm:text-sm md:text-base"
+            onClick={() => setSBTProof(SBTProof ? "" : "show")}
+          >
+            {SBTProof ? "Hide SBT proof details" : "Show SBT proof details"}
           </Button>
           {hasBadge && (
-            <Button className="bg-[#7633c8] text-white hover:bg-[#341a55] font-bold" onClick={() => setBadge(badge ? '' : 'show')}>
-              {badge ? 'Hide Badge' : 'Show Badge details'}
+            <Button
+              className="bg-[#7633c8] text-white hover:bg-[#341a55] font-bold"
+              onClick={() => setBadge(badge ? "" : "show")}
+            >
+              {badge ? "Hide Badge" : "Show Badge details"}
             </Button>
           )}
         </Modal.Footer>
