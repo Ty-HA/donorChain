@@ -59,6 +59,28 @@ describe("DonationProofSBT", function () {
     expect(await sbt.donationContract()).to.equal(await donation.getAddress());
   });
 
+  describe("setDonationContract", function () {
+    it("should allow the owner to set the donation contract address", async function () {
+      const { sbt, owner, donation } = await loadFixture(deployDonationFixture);
+      const newAddress = ethers.Wallet.createRandom().address;
+      await sbt.connect(owner).setDonationContract(newAddress);
+      expect(await sbt.donationContract()).to.equal(newAddress);
+    });
+
+    it("should revert if the address is the zero address", async function () {
+      const { sbt, owner } = await loadFixture(deployDonationFixture);
+      await expect(sbt.connect(owner).setDonationContract(ethers.ZeroAddress))
+        .to.be.revertedWith("Invalid donation contract address");
+    });
+
+    it("should not allow non-owner to set the donation contract address", async function () {
+      const { sbt, asso1 } = await loadFixture(deployDonationFixture);
+      await expect(sbt.connect(asso1).setDonationContract(asso1.address))
+        .to.be.revertedWithCustomError(sbt, "OwnableUnauthorizedAccount")
+        .withArgs(asso1.address);
+    });
+  });
+
   describe("onlyDonationContract modifier", function () {
     it("should not allow non-donation contract address to call restricted function", async function () {
       const { sbt, owner, asso1, donation } = await loadFixture(
