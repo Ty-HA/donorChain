@@ -2,13 +2,13 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title DonationBadgeNFT
 /// @author Ty HA
 /// @notice This contract is used to mint tokens representing donation badges as rewarding for donors
-contract DonationBadgeNFT is ERC721, Ownable {
+contract DonationBadgeNFT is ERC721, Ownable, ReentrancyGuard {
     uint256 private _nextTokenId;
 
     address public donationContract;
@@ -34,12 +34,14 @@ contract DonationBadgeNFT is ERC721, Ownable {
     uint256 public constant SILVER_THRESHOLD = 0.5 ether;
     uint256 public constant GOLD_THRESHOLD = 1 ether;
 
+    event DonationContractSet(address indexed newDonationContract);
     event BadgeMinted(
         address indexed donor,
         uint256 indexed tokenId,
         Tier tier
     );
     event TierURIUpdated(Tier indexed tier, string newURI);
+    event DonorTierUpdated(address indexed donor, Tier oldTier, Tier newTier);
 
     constructor() ERC721("DonationBadge", "DBADGE") Ownable(msg.sender) {
         string
@@ -62,9 +64,15 @@ contract DonationBadgeNFT is ERC721, Ownable {
     }
 
     /// @notice Set the address of the donation contract
-    /// @param _donationContract  The address of the donation contract
+    /// @param _donationContract The address of the donation contract
+    /// @dev This function can only be called by the contract owner
     function setDonationContract(address _donationContract) external onlyOwner {
+        require(
+            _donationContract != address(0),
+            "Invalid donation contract address"
+        );
         donationContract = _donationContract;
+        emit DonationContractSet(donationContract);
     }
 
     /// @notice Mint a badge for a donor
@@ -74,17 +82,23 @@ contract DonationBadgeNFT is ERC721, Ownable {
     function mintBadge(
         address _donor,
         uint256 _totalDonated
-    ) external onlyDonationContract returns (uint256) {
+    ) external nonReentrant onlyDonationContract returns (uint256) {
+        require(_donor != address(0), "Invalid donor address");
         Tier newTier = getTierForAmount(_totalDonated);
+        Tier oldTier = donorHighestTier[_donor];
         require(
             newTier > donorHighestTier[_donor],
             "Donor already has this tier or higher"
         );
 
         uint256 newTokenId = _nextTokenId++;
-        _safeMint(_donor, newTokenId);
+
         badges[newTokenId] = Badge(newTier, block.timestamp);
         donorHighestTier[_donor] = newTier;
+
+        emit DonorTierUpdated(_donor, oldTier, newTier);
+
+        _safeMint(_donor, newTokenId);
 
         emit BadgeMinted(_donor, newTokenId, newTier);
 

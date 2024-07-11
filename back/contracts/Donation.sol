@@ -261,6 +261,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         emit AssociationNameUpdated(_addr, _newName);
     }
 
+    /// @notice Removes an association from the whitelist
+    /// @param _association The address of the association to remove
     function removeAssociation(address _association) external onlyOwner {
         require(
             associations[_association].whitelisted,
@@ -303,7 +305,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     function donateToAssociation(
         address _association,
         uint256 _amount
-    ) external payable nonReentrant whenNotPaused {
+    ) public payable nonReentrant whenNotPaused {
         require(_amount > 0, "Donation amount must be greater than zero");
         require(
             msg.value == _amount,
@@ -377,7 +379,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     ) external onlyAssociation nonReentrant whenNotPaused {
         // 5% commission on each transfer
         uint256 _commission = (_amount * 5) / 100;
-
         uint256 _amountAfterCommission = _amount - _commission;
 
         require(
@@ -388,11 +389,18 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
 
         totalWithdrawals[msg.sender] += _amountAfterCommission;
         associations[msg.sender].balance -= _amount;
-        _recipient.transfer(_amountAfterCommission);
-
         accumulatedCommissions += _commission;
-        emit CommissionAccumulated(_commission);
 
+        associationTransfers[msg.sender].push(
+            TransferRecord({
+                recipient: _recipient,
+                amount: _amount,
+                purpose: _purpose,
+                timestamp: block.timestamp
+            })
+        );
+
+        emit CommissionAccumulated(_commission);
         emit FundsTransferred(
             _recipient,
             _amountAfterCommission,
@@ -400,20 +408,20 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             block.timestamp,
             block.number
         );
+        _recipient.transfer(_amountAfterCommission);
 
-        associationTransfers[msg.sender].push(
-            TransferRecord(_recipient, _amount, _purpose, block.timestamp)
-        );
+        
     }
 
     /// @notice Owner can withdraw accumulated commissions
-    function withdrawCommissions() external onlyOwner {
+    function withdrawCommissions() external onlyOwner nonReentrant {
         uint256 amount = accumulatedCommissions;
         require(amount > 0, "No commissions to withdraw");
         accumulatedCommissions = 0;
-        payable(owner()).transfer(amount);
 
         emit CommissionsWithdrawn(amount);
+
+        payable(owner()).transfer(amount);
     }
 
     // ::::::::::::: SBT ::::::::::::: //
@@ -526,15 +534,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         return donationsByAssociation[_association];
     }
 
-    /// @notice Get the list of transfers made by a specific association
-    /// @param _association The address of the association
-    /// @return An array of transfers made by the specified association
-    function getTransfersByAssociation(
-        address _association
-    ) external view returns (TransferRecord[] memory) {
-        return associationTransfers[_association];
-    }
-
     /// @notice Retrieves the list of whitelisted associations
     /// @return An array of addresses of whitelisted associations
     function getWhitelistedAssociations()
@@ -562,6 +561,15 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             assoc.rnaNumber,
             assoc.whitelisted
         );
+    }
+
+    /// @notice Get the list of transfers made by a specific association
+    /// @param _association The address of the association
+    /// @return An array of transfers made by the specified association
+    function getTransfersByAssociation(
+        address _association
+    ) external view returns (TransferRecord[] memory) {
+        return associationTransfers[_association];
     }
 
     // ::::::::::::: PAUSABLE  ::::::::::::: //

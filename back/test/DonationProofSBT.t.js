@@ -80,7 +80,7 @@ describe("DonationProofSBT", function () {
   describe("Constructor", function () {
     it("should set the initial base URI correctly", async function () {
       const newSBT = await (await ethers.getContractFactory("DonationProofSBT")).deploy();
-      expect(await newSBT.getBaseURI()).to.equal("https://rose-written-jellyfish-653.mypinata.cloud/ipfs/QmbQzHVt2xdJ1vDRMjAoyF6eaLH3WRY3D3mgqTW1MWdxuY/");
+      expect(await newSBT.getBaseURI()).to.equal("https://rose-written-jellyfish-653.mypinata.cloud/ipfs/QmX9NEQtAUtX1wUZHzhDRe7XE1uYUBMBxN5waFYLgMxaFp?pinataGatewayToken=s0BFC594wAJX3O6PQb7zBWU7ya34HL1dMZyATFnfWqGSfskmg-F6GmXEzAQCV4By");
     });
   });
 
@@ -126,7 +126,8 @@ describe("DonationProofSBT", function () {
     }
 
     it("should revert when donation contract is not set", async function () {
-      await sbt.connect(owner).setDonationContract(zeroAddress);
+      const { sbt, owner, donor1, asso1 } = await loadFixture(deployDonationFixture);
+    
       await expect(sbt.connect(owner).mint(donor1.address, 100, asso1.address, 1))
         .to.be.revertedWith("Caller is not the Donation contract");
     });

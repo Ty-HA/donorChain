@@ -59,12 +59,17 @@ contract DonationProofSBT is
     mapping(uint256 => DonationProof) public donationProofs;
 
     constructor() ERC721("DonationProof", "DPF") Ownable(msg.sender) {
-        _baseTokenURI = "https://rose-written-jellyfish-653.mypinata.cloud/ipfs/QmbQzHVt2xdJ1vDRMjAoyF6eaLH3WRY3D3mgqTW1MWdxuY/";
+        _baseTokenURI = "https://rose-written-jellyfish-653.mypinata.cloud/ipfs/QmX9NEQtAUtX1wUZHzhDRe7XE1uYUBMBxN5waFYLgMxaFp?pinataGatewayToken=s0BFC594wAJX3O6PQb7zBWU7ya34HL1dMZyATFnfWqGSfskmg-F6GmXEzAQCV4By";
     }
 
     /// @notice Set the donation contract address
     /// @param _donationContract The donation contract address
+    /// @dev This function can only be called by the contract owner
     function setDonationContract(address _donationContract) external onlyOwner {
+        require(
+            _donationContract != address(0),
+            "Invalid donation contract address"
+        );
         donationContract = _donationContract;
         emit DonationContractSet(msg.sender, _donationContract);
     }
@@ -93,7 +98,8 @@ contract DonationProofSBT is
         uint256 _amount,
         address _association,
         uint256 _blockNumber
-    ) external onlyDonationContract nonReentrant returns (uint256) {
+    ) external nonReentrant onlyDonationContract returns (uint256) {
+        require(_donor != address(0), "Invalid donor address");
         require(donationContract != address(0), "Donation contract not set");
         require(_amount > 0, "Donation amount must be greater than 0");
         require(_association != address(0), "Invalid association address");
@@ -101,16 +107,23 @@ contract DonationProofSBT is
             _blockNumber <= block.number,
             "Block number must be in the past"
         );
-        emit MintAttempt(msg.sender, donationContract, _donor);
-        uint256 tokenId = _tokenIdCounter++;
-        _safeMint(_donor, tokenId);
 
+        emit MintAttempt(msg.sender, donationContract, _donor);
+
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
+
+        // Update state before external interactions
         donationProofs[tokenId] = DonationProof(
             _amount,
             _association,
             block.timestamp,
             _blockNumber
         );
+
+        // External call
+        _safeMint(_donor, tokenId);
+
         emit DonationProofMinted(
             _donor,
             _amount,
@@ -119,6 +132,7 @@ contract DonationProofSBT is
             _blockNumber,
             tokenId
         );
+
         return tokenId;
     }
 
@@ -183,7 +197,7 @@ contract DonationProofSBT is
         revert("SBT tokens are not transferable");
     }
 
-        /// @notice block native transfers
+    /// @notice block native transfers
     function transferFrom(
         address,
         address,
