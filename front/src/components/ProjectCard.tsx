@@ -304,27 +304,39 @@ const ProjectCard = () => {
                   </div>
                 </div>
               </div>
-              <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
+              <Modal
+                show={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                size="xl"
+              >
                 <Modal.Header>Donation Details</Modal.Header>
-                <Modal.Body>
-                  <table className="w-full text-black text-left">
-                    <thead>
-                      <tr>
-                        <th>Donor</th>
-                        <th>Amount</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedAssociationDonations.map((donation, index) => (
-                        <tr key={index}>
-                          <td className="text-xs truncate">{donation.donor}</td>
-                          <td>{donation.amount} ETH</td>
-                          <td>{donation.timestamp}</td>
+                <Modal.Body className="max-h-[80vh] overflow-auto transform translate-z-0">
+                  <div className="min-w-[300px]">
+                    <table className="w-full text-black text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border">Donor</th>
+                          <th className="p-2 border">Amount</th>
+                          <th className="p-2 border">Date</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedAssociationDonations.map((donation, index) => (
+                          <tr key={index} className="border-b hover:bg-gray-50">
+                            <td className="p-2 text-xs truncate border">
+                              {donation.donor}
+                            </td>
+                            <td className="p-2 text-xs sm:text-sm border">
+                              {donation.amount} ETH
+                            </td>
+                            <td className="p-2 text-xs sm:text-sm border">
+                              {donation.timestamp}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Modal.Body>
               </Modal>
               <div className="grid grid-cols-2 gap-2 w-full mt-auto">

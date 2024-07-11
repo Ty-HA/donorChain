@@ -94,6 +94,8 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
     }
   };
 
+  
+
   const handleDonorClick = async (donorAddress: string) => {
     setSelectedDonor(donorAddress);
     await fetchTotalDonation(donorAddress);
