@@ -115,7 +115,7 @@ export default function AssociationDashboard() {
         );
 
         const currentBlock = await provider.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 50000);
+        const fromBlock = Math.max(0, currentBlock - 5000000);
 
         const filter = contract.filters.FundsTransferred(
           null,
