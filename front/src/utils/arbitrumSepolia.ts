@@ -18,7 +18,7 @@ export const arbitrumSepolia = {
     },
     contracts: {
       multicall3: {
-        address: '0x523b18de0c95c32459B7dE3F21E93943646Cac4b' as `0x${string}`,
+        address: '0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4' as `0x${string}`,
         blockCreated: 62705565,
       },
       

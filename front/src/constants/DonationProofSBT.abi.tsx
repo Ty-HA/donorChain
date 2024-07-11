@@ -1,5 +1,5 @@
 export const contractDonationProofSBTAddress =
-  "0xBbE0F111A9E9BE1644340370990d029af1E4281A";
+  "0xeF5e619946af35a452c83D2DaA080612143CcA87";
 
 export const contractDonationProofSBTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },

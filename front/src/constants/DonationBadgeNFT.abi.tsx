@@ -1,5 +1,5 @@
 export const contractDonationBadgeNFTAddress =
-  "0x0298C54F9F2428bE8A536768153fc334e5b68D6b";
+  "0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95";
 
 export const contractDonationBadgeNFTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
@@ -60,6 +60,7 @@ export const contractDonationBadgeNFTAbi = [
     name: "OwnableUnauthorizedAccount",
     type: "error",
   },
+  { inputs: [], name: "ReentrancyGuardReentrantCall", type: "error" },
   {
     anonymous: false,
     inputs: [
@@ -128,6 +129,44 @@ export const contractDonationBadgeNFTAbi = [
       },
     ],
     name: "BadgeMinted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newDonationContract",
+        type: "address",
+      },
+    ],
+    name: "DonationContractSet",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "donor",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "oldTier",
+        type: "uint8",
+      },
+      {
+        indexed: false,
+        internalType: "enum DonationBadgeNFT.Tier",
+        name: "newTier",
+        type: "uint8",
+      },
+    ],
+    name: "DonorTierUpdated",
     type: "event",
   },
   {

@@ -1,5 +1,5 @@
 export const contractDonationAddress =
-  "0x523b18de0c95c32459B7dE3F21E93943646Cac4b";
+  "0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4";
 
 export const contractDonationAbi = [
   {
@@ -484,6 +484,27 @@ export const contractDonationAbi = [
     ],
     name: "getTotalWithdrawals",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_association", type: "address" },
+    ],
+    name: "getTransfersByAssociation",
+    outputs: [
+      {
+        components: [
+          { internalType: "address", name: "recipient", type: "address" },
+          { internalType: "uint256", name: "amount", type: "uint256" },
+          { internalType: "string", name: "purpose", type: "string" },
+          { internalType: "uint256", name: "timestamp", type: "uint256" },
+        ],
+        internalType: "struct Donation.TransferRecord[]",
+        name: "",
+        type: "tuple[]",
+      },
+    ],
     stateMutability: "view",
     type: "function",
   },
