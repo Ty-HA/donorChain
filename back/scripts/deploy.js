@@ -33,25 +33,33 @@ async function main() {
   await donationBadgeNFT.setDonationContract(await donation.getAddress());
   console.log("Donation contract address set in DonationBadgeNFT contract");
 
-  // Verify contracts on Abrbiscan
-  console.log("Verifying contracts on Arbiscan...");
+  // Verify contracts on Arbiscan if not on localhost or hardhat network
+  if (hre.network.name !== "localhost" && hre.network.name !== "hardhat") {
+    console.log("Verifying contracts on Arbiscan...");
 
-  await hre.run("verify:verify", {
-    address: await donationProofSBT.getAddress(),
-    constructorArguments: [],
-  });
+    try {
+      await hre.run("verify:verify", {
+        address: await donationProofSBT.getAddress(),
+        constructorArguments: [],
+      });
 
-  await hre.run("verify:verify", {
-    address: await donationBadgeNFT.getAddress(),
-    constructorArguments: [],
-  });
+      await hre.run("verify:verify", {
+        address: await donationBadgeNFT.getAddress(),
+        constructorArguments: [],
+      });
 
-  await hre.run("verify:verify", {
-    address: await donation.getAddress(),
-    constructorArguments: [await donationProofSBT.getAddress(), await donationBadgeNFT.getAddress()],
-  });
+      await hre.run("verify:verify", {
+        address: await donation.getAddress(),
+        constructorArguments: [await donationProofSBT.getAddress(), await donationBadgeNFT.getAddress()],
+      });
 
-  console.log("Contracts verified on Arbiscan");
+      console.log("Contracts verified on Arbiscan");
+    } catch (error) {
+      console.error("Error verifying contracts:", error);
+    }
+  } else {
+    console.log("Skipping contract verification on local network");
+  }
 
   // Verify that all configurations are set correctly
   const sbtContractInDonation = await donation.sbtContract();
