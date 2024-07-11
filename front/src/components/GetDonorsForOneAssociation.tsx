@@ -130,7 +130,7 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
         {displayedDonors.map((donor, index) => (
           <li
             key={index}
-            className="text-black text-md sm:text-md flex items-center cursor-pointer pb-2 sm:p-0"
+            className="text-black text-md sm:text-md flex items-center cursor-pointer pb-2 sm:p-1 hover:bg-blue-100 hover:text-blue-600 rounded transition duration-200 ease-in-out"
             onClick={() => handleDonorClick(donor.address)}
           >
             <FaUserCircle className="mr-2" />
@@ -153,8 +153,18 @@ const GetDonorsForOneAssociation: React.FC<GetDonorsForOneAssociationProps> = ({
         onClose={() => setIsModalOpen(false)}
       >
         <Modal.Header>
-          <h2 className="font-bold">Donation Information for</h2>
+          <h2 className="font-bold">Donation Proof for</h2>
           <span className="truncate text-xs md:text-base">{selectedDonor}</span>
+          <p>
+            <a
+              href={`https://sepolia.arbiscan.io/address/${contractDonationAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-blue-600 text-xs md:text-base truncate"
+            >
+              View this transaction
+            </a>
+          </p>
         </Modal.Header>
         <Modal.Body>
           <p className="text-black text-xl">

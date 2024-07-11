@@ -98,6 +98,8 @@ const ProjectCard = () => {
     useState<Contributor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ethPrice, setEthPrice] = useState(0);
+  const [selectedAssociationDonations, setSelectedAssociationDonations] =
+    useState<DonationRecord[]>([]);
 
   const fetchDonations = useCallback(async (address: string) => {
     if (typeof window.ethereum !== "undefined") {
@@ -112,18 +114,18 @@ const ProjectCard = () => {
           address
         );
 
-        const formattedDonations = donationRecords.map((record: any) => ({
+        return donationRecords.map((record: any) => ({
           donor: record.donor,
           amount: ethers.formatEther(record.amount),
           timestamp: new Date(Number(record.timestamp) * 1000).toLocaleString(),
           blockNumber: record.blockNumber.toString(),
         }));
-
-        setDonations(formattedDonations);
       } catch (error) {
         console.error("Error fetching donations:", error);
+        throw error;
       }
     }
+    return [];
   }, []);
 
   useEffect(() => {
@@ -156,6 +158,19 @@ const ProjectCard = () => {
     fetchAssociations();
     fetchEthPrice();
   }, []);
+
+  const handleTotalDonationsClick = useCallback(
+    async (address: string) => {
+      setIsModalOpen(true);
+      try {
+        const donations = await fetchDonations(address);
+        setSelectedAssociationDonations(donations);
+      } catch (error) {
+        console.error("Error fetching donation details:", error);
+      }
+    },
+    [fetchDonations]
+  );
 
   const refreshAssociations = async () => {
     setIsLoading(true);
@@ -213,7 +228,9 @@ const ProjectCard = () => {
               </div>
               <p className=" text-black flex items-center break-all">
                 <FaWallet className="mr-2 flex-shrink-0" />
-                <span className="truncate text-md text-black">{association.address}</span>
+                <span className="truncate text-md text-black">
+                  {association.address}
+                </span>
               </p>
               <p className="text-black text-md flex items-center">
                 <FaAddressCard className="mr-2" />
@@ -267,7 +284,12 @@ const ProjectCard = () => {
                   </g>
                 </svg>
                 <div className="flex items-center justify-center">
-                  <div className="flex flex-col">
+                  <div
+                    className="flex flex-col cursor-pointer"
+                    onClick={() =>
+                      handleTotalDonationsClick(association.address)
+                    }
+                  >
                     <span className="text-xs">Total donations</span>
                     <div className="flex">
                       <span>{association.totalDonations} ETH</span>
@@ -282,6 +304,29 @@ const ProjectCard = () => {
                   </div>
                 </div>
               </div>
+              <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                <Modal.Header>Donation Details</Modal.Header>
+                <Modal.Body>
+                  <table className="w-full text-black text-left">
+                    <thead>
+                      <tr>
+                        <th>Donor</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedAssociationDonations.map((donation, index) => (
+                        <tr key={index}>
+                          <td className="text-xs truncate">{donation.donor}</td>
+                          <td>{donation.amount} ETH</td>
+                          <td>{donation.timestamp}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Modal.Body>
+              </Modal>
               <div className="grid grid-cols-2 gap-2 w-full mt-auto">
                 <DonateToAssociation
                   associationAddress={association.address}
@@ -291,7 +336,7 @@ const ProjectCard = () => {
                   Share
                 </Button>
               </div>
-              <div className="h-24 sm:h-24 overflow-y-auto my-2 sm:my-4">
+              <div className="h-24 sm:h-28 overflow-y-auto my-2 sm:my-4">
                 <GetDonorsForOneAssociation
                   associationAddress={association.address}
                   maxDonors={3}
