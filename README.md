@@ -16,7 +16,7 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 - **Admin dashboard**: An administrative dashboard allows authorized admin to manage and monitor the platform effectively.
 
 
-## Stack
+# Stack
 
 ### Backend
 
@@ -116,6 +116,31 @@ npx hardhat compile
 npx hardhat test
 npx hardhat coverage
 ```
+#### Example
+```
+describe("donateToAssociation", function () {
+it("should not allow donation to non-whitelisted association", async function () {
+      const { donation, asso2, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
+      const donationAmount = ethers.parseEther("1");
+      await expect(
+        donation
+          .connect(donor1)
+          .donateToAssociation(asso2.address, donationAmount, {
+            value: donationAmount,
+          })
+      ).to.be.revertedWith("Association is not whitelisted");
+    });
+})
+```
+```
+donateToAssociation
+      ✔ should allow a donor to make a donation (210ms)
+      ✔ should not allow donation if sent amount does not match specified amount (38ms)
+      ✔ should not allow donation to non-whitelisted association (40ms)
+      ✔ should not allow association to donate to itself (43ms)
+```
 
   233 passing (21s)
 
@@ -129,6 +154,25 @@ File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Li
 -----------------------|----------|----------|----------|----------|----------------|
 All files              |      100 |     87.5 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
+## Security
+To ensure the security of the smart contracts, we use the Slither static analysis tool. Slither helps to identify potential vulnerabilities in the smart contracts.
+
+To run Slither on the DonationBadgeNFT.sol contract, use the following command:
+```
+slither contracts/DonationBadgeNFT.sol --json rapportDonationBadgeNFT.json --solc-remaps "@openzeppelin=node_modules/@openzeppelin"
+```
+This command will generate a JSON report (reportDonationBadgeNFT.json) with the analysis results.
+
+Importing Reentrancy Guard
+We use OpenZeppelin's ReentrancyGuard to protect against reentrancy attacks. Ensure that you have imported the guard in your contracts:
+```
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+```
+
+
+
+
+
 
 ### License
 DonorChain is open source and available under the MIT license.
