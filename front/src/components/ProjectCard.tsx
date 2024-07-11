@@ -213,7 +213,7 @@ const ProjectCard = () => {
               </div>
               <p className=" text-black flex items-center break-all">
                 <FaWallet className="mr-2 flex-shrink-0" />
-                <span className="truncate text-xs md:text-xl text-black ">{association.address}</span>
+                <span className="truncate text-xs md:text-md text-black ">{association.address}</span>
               </p>
               <p className="text-black text-md flex items-center">
                 <FaAddressCard className="mr-2" />
