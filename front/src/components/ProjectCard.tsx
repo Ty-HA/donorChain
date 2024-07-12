@@ -61,7 +61,7 @@ async function getWhitelistedAssociations() {
   );
 
   try {
-    const associationAddresses = await contract.getWhitelistedAssociations();
+    const [associationAddresses, totalCount] = await contract.getWhitelistedAssociations(0, 1000);
     const associationsDetails = await Promise.all(
       associationAddresses.map(async (address: string) => {
         const details = await contract.associations(address);
@@ -202,8 +202,8 @@ const ProjectCard = () => {
     }).format(amount);
   };
 
-  if (isLoading) return <p>Loading associations...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (isLoading) return <p className="text-xl text-black">Loading associations...</p>;
+  if (error) return <p className="text-xl text-black">Error: {error}</p>;
 
   return (
     <>

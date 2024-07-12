@@ -368,8 +368,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             try badgeContract.mintBadge(msg.sender, totalDonated) {
                 // Badge minted successfully
             } catch {
-                // Badge minting failed, but we don't want to revert the donation
-                // You might want to emit an event here to log the failure
+                // Badge minting failed, don't want to revert the donation
+                // add event to log the failure
             }
         }
 

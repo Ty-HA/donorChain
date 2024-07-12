@@ -1,5 +1,5 @@
 export const contractDonationBadgeNFTAddress =
-  "0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e";
+  "0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95";
 
 export const contractDonationBadgeNFTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },

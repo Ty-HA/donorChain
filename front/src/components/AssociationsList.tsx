@@ -16,7 +16,10 @@ async function getWhitelistedAssociations() {
   const contract = new ethers.Contract(contractAddress, contractABI, provider);
 
   try {
-    const associationAddresses = await contract.getWhitelistedAssociations();
+    // const associationAddresses = await contract.getWhitelistedAssociations();
+    const [associationAddresses, totalCount] = await contract.getWhitelistedAssociations(0, 1000);
+    console.log('Total whitelisted associations:', totalCount.toString());
+    
     const associationsDetails = await Promise.all(associationAddresses.map(async (address: string) => {
       const details = await contract.associations(address);
       return {
@@ -70,8 +73,8 @@ const AssociationsList = () => {
     fetchAssociations();
   };
 
-  if (isLoading) return <p>Loading associations...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (isLoading) return <p className="text-black">Loading associations...</p>;
+  if (error) return <p className="text-black">Error: {error}</p>;
 
   return (
     <div>

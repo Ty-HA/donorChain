@@ -63,49 +63,41 @@ Deploy script was written to deploy and verify my 3 contracts
 
 ```
 Deploying contracts with the account: 0x8E9B6101776469f4F5e57d509fee35751dBbA54A
-DonationProofSBT deployed to: 0xeF5e619946af35a452c83D2DaA080612143CcA87
-DonationBadgeNFT deployed to: 0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95
-Donation deployed to: 0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4
+DonationProofSBT deployed to: 0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29
+DonationBadgeNFT deployed to: 0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e
+Donation deployed to: 0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd
 Donation contract address set in DonationProofSBT contract
 Donation contract address set in DonationBadgeNFT contract
 Verifying contracts on Arbiscan...
-Successfully submitted source code for contract
-contracts/DonationProofSBT.sol:DonationProofSBT at 0xeF5e619946af35a452c83D2DaA080612143CcA87
-for verification on the block explorer. Waiting for verification result...
+The contract 0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29 has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://sepolia.arbiscan.io/address/0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29#code
 
-Successfully verified contract DonationProofSBT on the block explorer.
-https://sepolia.arbiscan.io/address/0xeF5e619946af35a452c83D2DaA080612143CcA87#code
-
-Successfully submitted source code for contract
-contracts/DonationBadgeNFT.sol:DonationBadgeNFT at 0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95
-for verification on the block explorer. Waiting for verification result...
-
-Successfully verified contract DonationBadgeNFT on the block explorer.
-https://sepolia.arbiscan.io/address/0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95#code
+The contract 0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://sepolia.arbiscan.io/address/0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e#code
 
 Successfully submitted source code for contract
-contracts/Donation.sol:Donation at 0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4
+contracts/Donation.sol:Donation at 0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd
 for verification on the block explorer. Waiting for verification result...
 
 Successfully verified contract Donation on the block explorer.
-https://sepolia.arbiscan.io/address/0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4#code
+https://sepolia.arbiscan.io/address/0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd#code
 
 Contracts verified on Arbiscan
 Verification:
-SBT contract in Donation: 0xeF5e619946af35a452c83D2DaA080612143CcA87
-Badge contract in Donation: 0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95
-Donation contract in SBT: 0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4
-Donation contract in Badge: 0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4
+SBT contract in Donation: 0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29
+Badge contract in Donation: 0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e
+Donation contract in SBT: 0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd
+Donation contract in Badge: 0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd
 All addresses are correctly set!
 Deployment, verification, and initialization complete!
 ```
 Check the deployed smart contracts here:
 Donation
-https://sepolia.arbiscan.io/address/0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4#code
+https://sepolia.arbiscan.io/address/0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd#code
 DonationProofSBT
-https://sepolia.arbiscan.io/address/0xeF5e619946af35a452c83D2DaA080612143CcA87#code
+https://sepolia.arbiscan.io/address/0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29#code
 DonationBadgeNFT
-https://sepolia.arbiscan.io/address/0x3fFaD9C8F66fe16C3C047B1DEfb9B54c4E57AB95#code
+https://sepolia.arbiscan.io/address/0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e#code
 
 
 
