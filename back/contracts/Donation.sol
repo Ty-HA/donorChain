@@ -380,7 +380,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         // 5% commission on each transfer
         uint256 _commission = (_amount * 5) / 100;
         uint256 _amountAfterCommission = _amount - _commission;
-
+        require(_recipient != msg.sender, "Cannot transfer to own address");
         require(
             _amountAfterCommission + _commission <= address(this).balance,
             "Insufficient contract balance for transfer"

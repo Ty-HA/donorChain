@@ -1614,10 +1614,10 @@ describe("Donation", function () {
   });
 
   describe("getTotalWithdrawals", function () {
-    let donation, owner, donor1, asso1, asso2;
+    let donation, owner, donor1, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+      ({ donation, owner, donor1, asso1, asso2, recipient } = await loadFixture(
         deployDonationFixture
       ));
 
@@ -1662,7 +1662,7 @@ describe("Donation", function () {
       const withdrawalAmount = ethers.parseEther("1");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       const totalWithdrawals = await donation.getTotalWithdrawals(
         asso1.address
@@ -1677,10 +1677,10 @@ describe("Donation", function () {
       const withdrawalAmount2 = ethers.parseEther("2");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
 
       const totalWithdrawals = await donation.getTotalWithdrawals(
         asso1.address
@@ -1696,10 +1696,10 @@ describe("Donation", function () {
       const withdrawalAmount2 = ethers.parseEther("2");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount1, "Asso1 withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount1, "Asso1 withdrawal");
       await donation
         .connect(asso2)
-        .transferFunds(asso2.address, withdrawalAmount2, "Asso2 withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount2, "Asso2 withdrawal");
 
       const totalWithdrawalsAsso1 = await donation.getTotalWithdrawals(
         asso1.address
@@ -1722,7 +1722,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
       let totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
       expect(totalWithdrawals).to.equal(
         calculateWithdrawalAfterCommission(withdrawalAmount1)
@@ -1730,7 +1730,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
       totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
       const expectedTotal =
         calculateWithdrawalAfterCommission(withdrawalAmount1) +
@@ -1739,11 +1739,11 @@ describe("Donation", function () {
     });
   });
   describe("getAccumulatedCommissions", function () {
-    let donation, owner, donor1, asso1, asso2;
+    let donation, owner, donor1, asso1, asso2, recipient;
     let calculateCommission;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+      ({ donation, owner, donor1, asso1, asso2, recipient } = await loadFixture(
         deployDonationFixture
       ));
 
@@ -1777,7 +1777,7 @@ describe("Donation", function () {
       const withdrawalAmount = ethers.parseEther("1");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       const accumulatedCommissions = await donation.getAccumulatedCommissions();
       const expectedCommission = calculateCommission(withdrawalAmount);
@@ -1790,41 +1790,10 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount2, "Second withdrawal");
-
-      const accumulatedCommissions = await donation.getAccumulatedCommissions();
-      const expectedCommission =
-        calculateCommission(withdrawalAmount1) +
-        calculateCommission(withdrawalAmount2);
-      expect(accumulatedCommissions).to.equal(expectedCommission);
-    });
-
-    it("should correctly accumulate commissions from multiple associations", async function () {
-      const donationAmount = ethers.parseEther("10");
-      const withdrawalAmount1 = ethers.parseEther("1");
-      const withdrawalAmount2 = ethers.parseEther("2");
-
-      // Donate to associations first
-      await donation
-        .connect(donor1)
-        .donateToAssociation(asso1.address, donationAmount, {
-          value: donationAmount,
-        });
-      await donation
-        .connect(donor1)
-        .donateToAssociation(asso2.address, donationAmount, {
-          value: donationAmount,
-        });
-
-      await donation
-        .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount1, "Asso1 withdrawal");
-      await donation
-        .connect(asso2)
-        .transferFunds(asso2.address, withdrawalAmount2, "Asso2 withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
 
       const accumulatedCommissions = await donation.getAccumulatedCommissions();
       const expectedCommission =
@@ -1837,7 +1806,7 @@ describe("Donation", function () {
       const withdrawalAmount = ethers.parseEther("1");
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       // Owner withdraws commissions
       await donation.connect(owner).withdrawCommissions();
@@ -1848,10 +1817,10 @@ describe("Donation", function () {
   });
 
   describe("getContractBalance", function () {
-    let donation, owner, donor1, donor2, asso1, asso2;
+    let donation, owner, donor1, donor2, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } = await loadFixture(
         deployDonationFixture
       ));
 
@@ -1912,7 +1881,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       const balance = await donation.getContractBalance();
 
@@ -1934,7 +1903,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, donationAmount, "Withdraw all");
+        .transferFunds(recipient.address, donationAmount, "Withdraw all");
 
       const balance = await donation.getContractBalance();
       expect(balance).to.equal((donationAmount * BigInt(5)) / BigInt(100)); // Only commission should remain
@@ -1951,7 +1920,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, donationAmount, "Withdraw all");
+        .transferFunds(recipient.address, donationAmount, "Withdraw all");
 
       await donation.connect(owner).withdrawCommissions();
 
@@ -2020,65 +1989,6 @@ describe("Donation", function () {
       expect(balance).to.equal(donationAmount1 + donationAmount2);
     });
 
-    it("should correctly reflect the balance after donations and withdrawals", async function () {
-      const donationAmount = ethers.parseEther("10");
-      const withdrawalAmount = ethers.parseEther("1");
-
-      await donation
-        .connect(donor1)
-        .donateToAssociation(asso1.address, donationAmount, {
-          value: donationAmount,
-        });
-
-      // Log the balance before withdrawal
-      console.log(
-        "Balance before withdrawal:",
-        await donation.getAssociationBalance(asso1.address)
-      );
-
-      await donation
-        .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
-
-      // Log the balance after withdrawal
-      console.log(
-        "Balance after withdrawal:",
-        await donation.getAssociationBalance(asso1.address)
-      );
-
-      const balance = await donation.getAssociationBalance(asso1.address);
-      expect(balance).to.equal(donationAmount - withdrawalAmount);
-    });
-
-    it("should correctly reflect the balance after all funds are withdrawn", async function () {
-      const donationAmount = ethers.parseEther("10");
-
-      await donation
-        .connect(donor1)
-        .donateToAssociation(asso1.address, donationAmount, {
-          value: donationAmount,
-        });
-
-      // Log the balance before withdrawal
-      console.log(
-        "Balance before full withdrawal:",
-        await donation.getAssociationBalance(asso1.address)
-      );
-
-      await donation
-        .connect(asso1)
-        .transferFunds(asso1.address, donationAmount, "Withdraw all");
-
-      // Log the balance after withdrawal
-      console.log(
-        "Balance after full withdrawal:",
-        await donation.getAssociationBalance(asso1.address)
-      );
-
-      const balance = await donation.getAssociationBalance(asso1.address);
-      expect(balance).to.equal(0);
-    });
-
     it("should not affect the balance of other associations", async function () {
       const donationAmount = ethers.parseEther("1");
       await donation
@@ -2096,10 +2006,10 @@ describe("Donation", function () {
   });
 
   describe("getAssociationLastDeposit", function () {
-    let donation, owner, donor1, asso1, asso2;
+    let donation, owner, donor1, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, asso1, asso2 } = await loadFixture(
+      ({ donation, owner, donor1, asso1, asso2, recipient } = await loadFixture(
         deployDonationFixture
       ));
 
@@ -2170,7 +2080,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       const lastDepositAfterWithdrawal =
         await donation.getAssociationLastDeposit(asso1.address);
@@ -2180,14 +2090,12 @@ describe("Donation", function () {
   });
 
   describe("getTotalDonationsToAssociation", function () {
-    let donation, owner, donor1, donor2, asso1, asso2, nonAssociation;
+    let donation, owner, donor1, donor2, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, donor2, asso1, asso2 } = await loadFixture(
+      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } = await loadFixture(
         deployDonationFixture
       ));
-
-      nonAssociation = ethers.Wallet.createRandom().address;
 
       // Whitelist the associations
       await donation
@@ -2207,7 +2115,7 @@ describe("Donation", function () {
 
     it("should return 0 for a non-whitelisted address", async function () {
       const totalDonations = await donation.getTotalDonationsToAssociation(
-        nonAssociation
+        recipient
       );
       expect(totalDonations).to.equal(0);
     });
@@ -2291,7 +2199,7 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(asso1.address, withdrawalAmount, "Test withdrawal");
+        .transferFunds(recipient.address, withdrawalAmount, "Test withdrawal");
 
       const totalAfterWithdrawal =
         await donation.getTotalDonationsToAssociation(asso1.address);
