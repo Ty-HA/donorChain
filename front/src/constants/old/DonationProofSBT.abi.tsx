@@ -1,7 +1,7 @@
-export const contractDonationBadgeNFTAddress =
-  "0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e";
+export const contractDonationProofSBTAddress =
+  "0xeF5e619946af35a452c83D2DaA080612143CcA87";
 
-export const contractDonationBadgeNFTAbi = [
+export const contractDonationProofSBTAbi = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   {
     inputs: [
@@ -110,25 +110,19 @@ export const contractDonationBadgeNFTAbi = [
     anonymous: false,
     inputs: [
       {
-        indexed: true,
-        internalType: "address",
-        name: "donor",
-        type: "address",
-      },
-      {
-        indexed: true,
+        indexed: false,
         internalType: "uint256",
-        name: "tokenId",
+        name: "_fromTokenId",
         type: "uint256",
       },
       {
         indexed: false,
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "tier",
-        type: "uint8",
+        internalType: "uint256",
+        name: "_toTokenId",
+        type: "uint256",
       },
     ],
-    name: "BadgeMinted",
+    name: "BatchMetadataUpdate",
     type: "event",
   },
   {
@@ -137,7 +131,13 @@ export const contractDonationBadgeNFTAbi = [
       {
         indexed: true,
         internalType: "address",
-        name: "newDonationContract",
+        name: "caller",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "donationContract",
         type: "address",
       },
     ],
@@ -155,18 +155,74 @@ export const contractDonationBadgeNFTAbi = [
       },
       {
         indexed: false,
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "oldTier",
-        type: "uint8",
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "association",
+        type: "address",
       },
       {
         indexed: false,
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "newTier",
-        type: "uint8",
+        internalType: "uint256",
+        name: "timestamp",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "blockNumber",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
       },
     ],
-    name: "DonorTierUpdated",
+    name: "DonationProofMinted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_tokenId",
+        type: "uint256",
+      },
+    ],
+    name: "MetadataUpdate",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "donationContract",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "donor",
+        type: "address",
+      },
+    ],
+    name: "MintAttempt",
     type: "event",
   },
   {
@@ -191,25 +247,6 @@ export const contractDonationBadgeNFTAbi = [
   {
     anonymous: false,
     inputs: [
-      {
-        indexed: true,
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "tier",
-        type: "uint8",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "newURI",
-        type: "string",
-      },
-    ],
-    name: "TierURIUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       { indexed: true, internalType: "address", name: "from", type: "address" },
       { indexed: true, internalType: "address", name: "to", type: "address" },
       {
@@ -223,27 +260,6 @@ export const contractDonationBadgeNFTAbi = [
     type: "event",
   },
   {
-    inputs: [],
-    name: "BRONZE_THRESHOLD",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "GOLD_THRESHOLD",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "SILVER_THRESHOLD",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       { internalType: "address", name: "", type: "address" },
       { internalType: "uint256", name: "", type: "uint256" },
@@ -251,20 +267,6 @@ export const contractDonationBadgeNFTAbi = [
     name: "approve",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    name: "badges",
-    outputs: [
-      {
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "tier",
-        type: "uint8",
-      },
-      { internalType: "uint256", name: "timestamp", type: "uint256" },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -289,10 +291,13 @@ export const contractDonationBadgeNFTAbi = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "address", name: "", type: "address" }],
-    name: "donorHighestTier",
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "donationProofs",
     outputs: [
-      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "address", name: "association", type: "address" },
+      { internalType: "uint256", name: "timestamp", type: "uint256" },
+      { internalType: "uint256", name: "blockNumber", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
@@ -305,55 +310,36 @@ export const contractDonationBadgeNFTAbi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "getBaseURI",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
-    name: "getBadgeDetails",
+    name: "getDonationProof",
     outputs: [
       {
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "tier",
-        type: "uint8",
+        components: [
+          { internalType: "uint256", name: "amount", type: "uint256" },
+          { internalType: "address", name: "association", type: "address" },
+          { internalType: "uint256", name: "timestamp", type: "uint256" },
+          { internalType: "uint256", name: "blockNumber", type: "uint256" },
+        ],
+        internalType: "struct DonationProofSBT.DonationProof",
+        name: "",
+        type: "tuple",
       },
-      { internalType: "uint256", name: "timestamp", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [{ internalType: "address", name: "_donor", type: "address" }],
-    name: "getDonorBadges",
+    name: "getDonorTokens",
     outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "_donor", type: "address" }],
-    name: "getDonorHighestTier",
-    outputs: [
-      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" }],
-    name: "getTierForAmount",
-    outputs: [
-      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
-    ],
-    stateMutability: "pure",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "_tier",
-        type: "uint8",
-      },
-    ],
-    name: "getTierName",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "pure",
     type: "function",
   },
   {
@@ -369,9 +355,11 @@ export const contractDonationBadgeNFTAbi = [
   {
     inputs: [
       { internalType: "address", name: "_donor", type: "address" },
-      { internalType: "uint256", name: "_totalDonated", type: "uint256" },
+      { internalType: "uint256", name: "_amount", type: "uint256" },
+      { internalType: "address", name: "_association", type: "address" },
+      { internalType: "uint256", name: "_blockNumber", type: "uint256" },
     ],
-    name: "mintBadge",
+    name: "mint",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "nonpayable",
     type: "function",
@@ -438,24 +426,17 @@ export const contractDonationBadgeNFTAbi = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "_donationContract", type: "address" },
-    ],
-    name: "setDonationContract",
+    inputs: [{ internalType: "string", name: "_newBaseURI", type: "string" }],
+    name: "setBaseURI",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "enum DonationBadgeNFT.Tier",
-        name: "_tier",
-        type: "uint8",
-      },
-      { internalType: "string", name: "_uri", type: "string" },
+      { internalType: "address", name: "_donationContract", type: "address" },
     ],
-    name: "setTierURI",
+    name: "setDonationContract",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -470,15 +451,6 @@ export const contractDonationBadgeNFTAbi = [
   {
     inputs: [],
     name: "symbol",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "enum DonationBadgeNFT.Tier", name: "", type: "uint8" },
-    ],
-    name: "tierURIs",
     outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function",

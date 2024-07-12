@@ -30,13 +30,12 @@ export function useUserRole() {
             return;
           }
 
-          // Vérifier si l'adresse est une association whitelistée
-          const whitelistedAssociations =
-            await contract.getWhitelistedAssociations();
-          if (whitelistedAssociations.includes(address)) {
-            setUserRole("association");
-            return;
-          }
+           // Vérifier si l'adresse est une association whitelistée
+           const isWhitelisted = await contract.isWhitelisted(address);
+           if (isWhitelisted) {
+             setUserRole("association");
+             return;
+           }
 
           // Double vérification avec les détails de l'association
           const associationDetails = await contract.associations(address);

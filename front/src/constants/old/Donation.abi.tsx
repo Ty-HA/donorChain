@@ -1,5 +1,5 @@
 export const contractDonationAddress =
-  "0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd";
+  "0x808Fd994ED96a66e199f7D9B67C60eeC08b772F4";
 
 export const contractDonationAbi = [
   {
@@ -260,25 +260,6 @@ export const contractDonationAbi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "oldMax",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "newMax",
-        type: "uint256",
-      },
-    ],
-    name: "MaxWhitelistedUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: true,
         internalType: "address",
         name: "previousOwner",
@@ -343,6 +324,13 @@ export const contractDonationAbi = [
     name: "addAssociation",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "associationList",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -521,29 +509,9 @@ export const contractDonationAbi = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "uint256", name: "startIndex", type: "uint256" },
-      { internalType: "uint256", name: "count", type: "uint256" },
-    ],
-    name: "getWhitelistedAssociations",
-    outputs: [
-      { internalType: "address[]", name: "", type: "address[]" },
-      { internalType: "uint256", name: "", type: "uint256" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "", type: "address" }],
-    name: "isWhitelisted",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [],
-    name: "maxWhitelisted",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "getWhitelistedAssociations",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
     stateMutability: "view",
     type: "function",
   },
@@ -602,13 +570,6 @@ export const contractDonationAbi = [
       },
     ],
     name: "setBadgeContract",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "_newMax", type: "uint256" }],
-    name: "setMaxWhitelisted",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -696,13 +657,6 @@ export const contractDonationAbi = [
     name: "updateAssociationWalletAddr",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "whitelistedCount",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
     type: "function",
   },
   {
