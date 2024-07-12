@@ -28,16 +28,16 @@ export default function NavBar() {
           <Navbar.Link href="/" className={navLinkClass}>
             Home
           </Navbar.Link>
-          <Navbar.Link href="#contact" className={navLinkClass}>
+          <Navbar.Link href="/#contact" className={navLinkClass}>
             Join Us
           </Navbar.Link>
-          <Navbar.Link href="#projects" className={navLinkClass}>
+          <Navbar.Link href="/#projects" className={navLinkClass}>
             Our projects
           </Navbar.Link>
           <Navbar.Link href="/associationDashboard" className={navLinkClass}>
             Dashboard
           </Navbar.Link>
-          <Navbar.Link href="#contact" className={navLinkClass}>
+          <Navbar.Link href="/#contact" className={navLinkClass}>
             Contact
           </Navbar.Link>
           <Navbar.Link href="/admin" className={`${navLinkClass} text-green-500`}>
