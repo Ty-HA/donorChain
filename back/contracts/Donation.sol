@@ -78,9 +78,12 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     mapping(address => DonationRecord[]) public donationsByAssociation;
     /// @notice A mapping of transfers made by each association
     mapping(address => TransferRecord[]) private associationTransfers;
+    /// @notice A mapping of whitelisted addresses
+    mapping(address => bool) public isWhitelisted;
 
-    /// @notice An array of whitelisted associations
-    address[] public associationList;
+    mapping(uint256 => address) private whitelistedAddresses;
+    mapping(address => uint256) private whitelistedIndices;
+    uint256 public whitelistedCount;
 
     event BadgeContractSet(address indexed badgeContract);
     event AssociationAdded(
@@ -122,6 +125,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     event CommissionAccumulated(uint256 amount);
     event CommissionsWithdrawn(uint256 amount);
     event SBTContractSet(address indexed sbtContract);
+    event MaxWhitelistedUpdated(uint256 oldMax, uint256 newMax);
 
     /// @dev Sets the original owner of the contract upon deployment
     /// @param _sbtContractAddress The address of the DonationProofSBT contract
@@ -145,6 +149,20 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         );
         badgeContract = DonationBadgeNFT(_badgeContractAddress);
         emit BadgeContractSet(_badgeContractAddress);
+    }
+
+    uint256 public maxWhitelisted = 100;
+
+    /// @notice Sets the maximum number of whitelisted associations
+    /// @param _newMax The new maximum number of whitelisted associations
+    function setMaxWhitelisted(uint256 _newMax) external onlyOwner {
+        require(
+            _newMax > maxWhitelisted,
+            "New max must be greater than current max"
+        );
+        uint oldMax = maxWhitelisted;
+        maxWhitelisted = _newMax;
+        emit MaxWhitelistedUpdated(oldMax, _newMax);
     }
 
     // ::::::::::::: MODIFIERS ::::::::::::: //
@@ -172,13 +190,17 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     ) external onlyOwner {
         require(_association != address(0), "Invalid address");
         require(
-            !associations[_association].whitelisted,
+            !isWhitelisted[_association],
             "Association already whitelisted"
         );
         require(bytes(_name).length > 0, "Association name cannot be empty");
         require(
             bytes(_postalAddress).length > 0,
             "Postal address cannot be empty"
+        );
+        require(
+            whitelistedCount < maxWhitelisted,
+            "Maximum whitelisted associations reached"
         );
 
         associations[_association] = Association({
@@ -191,8 +213,10 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             lastDeposit: block.timestamp
         });
 
-        associationId[_association] = associationList.length;
-        associationList.push(_association);
+        isWhitelisted[_association] = true;
+        whitelistedAddresses[whitelistedCount] = _association;
+        whitelistedIndices[_association] = whitelistedCount;
+        whitelistedCount++;
 
         emit AssociationAdded(_association, _name, _postalAddress, _rnaNumber);
     }
@@ -205,7 +229,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _addr,
         address _newAddr
     ) external onlyOwner {
-        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(isWhitelisted[_addr], "Association not whitelisted");
+        require(!isWhitelisted[_newAddr], "New address already whitelisted");
         require(_newAddr != address(0), "Invalid address");
 
         // Save the association data
@@ -213,18 +238,19 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         // Update the address in the struct
         updatedAssociation.addr = _newAddr;
 
+        // Update the mappings
+        uint256 index = whitelistedIndices[_addr];
+        whitelistedAddresses[index] = _newAddr;
+        whitelistedIndices[_newAddr] = index;
         // Remove the old entry
         delete associations[_addr];
         // Add the updated association with the new address as the key
         associations[_newAddr] = updatedAssociation;
 
         // Update associationList
-        uint256 index = associationId[_addr];
-        associationList[index] = _newAddr;
-
-        // Update associationId
-        delete associationId[_addr];
-        associationId[_newAddr] = index;
+        // Update whitelist status
+        isWhitelisted[_addr] = false;
+        isWhitelisted[_newAddr] = true;
 
         emit AssociationWalletAddrUpdated(_addr, _newAddr);
     }
@@ -236,7 +262,7 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _addr,
         string memory _newPostalAddress
     ) external onlyOwner {
-        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(isWhitelisted[_addr], "Association not whitelisted");
         require(bytes(_newPostalAddress).length > 0, "Invalid postal address");
 
         // Update the association's postal address
@@ -252,10 +278,10 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
         address _addr,
         string memory _newName
     ) external onlyOwner {
-        require(associations[_addr].whitelisted, "Association not whitelisted");
+        require(isWhitelisted[_addr], "Association not whitelisted");
         require(bytes(_newName).length > 0, "Invalid Name");
 
-        // Update the association's postal address
+        // Update the association's name
         associations[_addr].name = _newName;
 
         emit AssociationNameUpdated(_addr, _newName);
@@ -264,36 +290,27 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @notice Removes an association from the whitelist
     /// @param _association The address of the association to remove
     function removeAssociation(address _association) external onlyOwner {
+        require(isWhitelisted[_association], "Association not whitelisted");
         require(
-            associations[_association].whitelisted,
-            "Association not whitelisted"
+            associations[_association].balance == 0,
+            "Association has remaining funds. Please withdraw before removing"
         );
 
-        uint256 balance = associations[_association].balance;
-        if (balance > 0) {
-            // If the association has remaining funds, prevent removal
-            revert(
-                "Association has remaining funds. Please withdraw before removing."
-            );
-        }
+        uint256 indexToRemove = whitelistedIndices[_association];
+        address lastAddress = whitelistedAddresses[whitelistedCount - 1];
 
-        uint256 index = associationId[_association];
-        uint256 lastIndex = associationList.length - 1;
-        address lastAssociation = associationList[lastIndex];
+        whitelistedAddresses[indexToRemove] = lastAddress;
+        whitelistedIndices[lastAddress] = indexToRemove;
 
-        associationList[index] = lastAssociation;
-        associationId[lastAssociation] = index;
+        delete whitelistedAddresses[whitelistedCount - 1];
+        delete whitelistedIndices[_association];
 
-        associationList.pop();
-        delete associationId[_association];
+        isWhitelisted[_association] = false;
+        whitelistedCount--;
 
-        // Reset association details
-        associations[_association].whitelisted = false;
-        // Reset association balance
-        associations[_association].balance = 0;
+        delete associations[_association];
 
         emit AssociationRemoved(_association);
-        delete associations[_association];
     }
 
     // ::::::::::::: DONATION MANAGEMENT ::::::::::::: //
@@ -409,8 +426,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             block.number
         );
         _recipient.transfer(_amountAfterCommission);
-
-        
     }
 
     /// @notice Owner can withdraw accumulated commissions
@@ -535,13 +550,32 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Retrieves the list of whitelisted associations
-    /// @return An array of addresses of whitelisted associations
-    function getWhitelistedAssociations()
-        external
-        view
-        returns (address[] memory)
-    {
-        return associationList;
+    /// @return An array of whitelisted associations
+    function getWhitelistedAssociations(
+        uint256 startIndex,
+        uint256 count
+    ) external view returns (address[] memory, uint256) {
+        require(
+            startIndex == 0 || startIndex < whitelistedCount,
+            "Start index out of bounds"
+        );
+
+        if (whitelistedCount == 0) {
+            return (new address[](0), 0);
+        }
+
+        uint256 endIndex = startIndex + count;
+        if (endIndex > whitelistedCount) {
+            endIndex = whitelistedCount;
+        }
+        uint256 resultCount = endIndex - startIndex;
+
+        address[] memory result = new address[](resultCount);
+        for (uint256 i = 0; i < resultCount; i++) {
+            result[i] = whitelistedAddresses[startIndex + i];
+        }
+
+        return (result, whitelistedCount);
     }
 
     /// @notice Retrieves the details of a specific association

@@ -136,6 +136,55 @@ describe("Donation", function () {
     console.log("SBT contract address correctly set in Donation contract");
   });
 
+describe("setMaxWhitelisted", function () {
+  let donation, owner, nonOwner;
+
+  beforeEach(async function () {
+    ({ donation, owner } = await loadFixture(deployDonationFixture));
+    [, nonOwner] = await ethers.getSigners();
+  });
+
+  it("should allow the owner to increase the maximum number of whitelisted associations", async function () {
+    const initialMax = await donation.maxWhitelisted();
+    const newMax = initialMax + 1n;
+
+    await expect(donation.connect(owner).setMaxWhitelisted(newMax))
+      .to.emit(donation, "MaxWhitelistedUpdated")
+      .withArgs(initialMax, newMax);
+
+    expect(await donation.maxWhitelisted()).to.equal(newMax);
+  });
+
+  it("should revert if the new max is not greater than the current max", async function () {
+    const currentMax = await donation.maxWhitelisted();
+
+    await expect(donation.connect(owner).setMaxWhitelisted(currentMax))
+      .to.be.revertedWith("New max must be greater than current max");
+
+    await expect(donation.connect(owner).setMaxWhitelisted(currentMax - 1n))
+      .to.be.revertedWith("New max must be greater than current max");
+  });
+
+  it("should revert if called by non-owner", async function () {
+    const currentMax = await donation.maxWhitelisted();
+    const newMax = currentMax + 1n;
+
+    await expect(donation.connect(nonOwner).setMaxWhitelisted(newMax))
+    .to.be.revertedWithCustomError(donation, "OwnableUnauthorizedAccount")
+  });
+
+  it("should allow setting a much larger maximum", async function () {
+    const initialMax = await donation.maxWhitelisted();
+    const newMax = initialMax * 1000n; // 1000 times larger
+
+    await expect(donation.connect(owner).setMaxWhitelisted(newMax))
+      .to.emit(donation, "MaxWhitelistedUpdated")
+      .withArgs(initialMax, newMax);
+
+    expect(await donation.maxWhitelisted()).to.equal(newMax);
+  });
+});
+
   describe("onlyAssociation modifier", function () {
     it("should not allow non-whitelisted address to call restricted function", async function () {
       const { donation, donor1 } = await loadFixture(deployDonationFixture);
@@ -243,7 +292,7 @@ describe("Donation", function () {
           .addAssociation(asso1.address, "Asso1", "", "RNA123")
       ).to.be.revertedWith("Postal address cannot be empty");
     });
-    it("should correctly update associationList and associationId", async function () {
+    it("should correctly whitelist associations and return them", async function () {
       const { donation, owner, asso1, asso2 } = await loadFixture(
         deployDonationFixture
       );
@@ -255,10 +304,22 @@ describe("Donation", function () {
         .connect(owner)
         .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
 
-      const associationList = await donation.getWhitelistedAssociations();
-      expect(associationList).to.have.lengthOf(2);
-      expect(associationList[0]).to.equal(asso1.address);
-      expect(associationList[1]).to.equal(asso2.address);
+      // Vérifier que les associations sont bien whitelistées
+      expect(await donation.isWhitelisted(asso1.address)).to.be.true;
+      expect(await donation.isWhitelisted(asso2.address)).to.be.true;
+
+      // Vérifier le nombre total d'associations whitelistées
+      expect(await donation.whitelistedCount()).to.equal(2);
+
+      // Obtenir la liste des associations whitelistées
+      const [whitelistedAssociations, totalCount] =
+        await donation.getWhitelistedAssociations(0, 10);
+
+      // Vérifier que la liste contient les bonnes adresses
+      expect(whitelistedAssociations).to.have.lengthOf(2);
+      expect(whitelistedAssociations).to.include(asso1.address);
+      expect(whitelistedAssociations).to.include(asso2.address);
+      expect(totalCount).to.equal(2);
     });
   });
 
@@ -347,10 +408,7 @@ describe("Donation", function () {
         .updateAssociationWalletAddr(asso1.address, asso2.address);
 
       // Check that the old address is no longer whitelisted
-      const oldAssociationDetails = await donation.getAssociationDetails(
-        asso1.address
-      );
-      expect(oldAssociationDetails[3]).to.be.false; // whitelisted should be false
+      expect(await donation.isWhitelisted(asso1.address)).to.be.false;
 
       // Check that the new address is whitelisted and has the correct details
       const newAssociationDetails = await donation.getAssociationDetails(
@@ -359,12 +417,14 @@ describe("Donation", function () {
       expect(newAssociationDetails[0]).to.equal("Asso1"); // name
       expect(newAssociationDetails[1]).to.equal("123 Main St"); // postalAddress
       expect(newAssociationDetails[2]).to.equal("RNA123"); // rnaNumber
-      expect(newAssociationDetails[3]).to.be.true; // whitelisted should be true
+      expect(await donation.isWhitelisted(asso2.address)).to.be.true;
 
-      // Check the updated associationList
-      const associationList = await donation.getWhitelistedAssociations();
+      // Check the updated whitelisted associations
+      const [associationList, totalCount] =
+        await donation.getWhitelistedAssociations(0, 10);
       expect(associationList).to.have.lengthOf(1);
       expect(associationList[0]).to.equal(asso2.address);
+      expect(totalCount).to.equal(1);
 
       // Try to use the old address (should fail)
       await expect(
@@ -560,9 +620,11 @@ describe("Donation", function () {
       );
       expect(associationDetails[3]).to.be.false; // whitelisted should be false
 
-      const associationList = await donation.getWhitelistedAssociations();
+      const [associationList, totalCount] =
+        await donation.getWhitelistedAssociations(0, 10);
       expect(associationList).to.have.lengthOf(1);
       expect(associationList[0]).to.equal(asso2.address);
+      expect(totalCount).to.equal(1);
     });
 
     it("should not allow non-owner to remove an association", async function () {
@@ -605,11 +667,13 @@ describe("Donation", function () {
 
       await donation.connect(owner).removeAssociation(asso2.address);
 
-      const associationList = await donation.getWhitelistedAssociations();
+      const [associationList, totalCount] =
+        await donation.getWhitelistedAssociations(0, 10);
       expect(associationList).to.have.lengthOf(2);
       expect(associationList).to.include(asso1.address);
       expect(associationList).to.include(asso3.address);
       expect(associationList).to.not.include(asso2.address);
+      expect(totalCount).to.equal(2);
 
       // Verify that the remaining associations can still be updated
       await expect(
@@ -625,39 +689,60 @@ describe("Donation", function () {
     });
 
     it("should not allow removing an association with remaining balance", async function () {
-      const { donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture);
-    
-      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-      
+      const { donation, owner, asso1, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
       // Faire un don à l'association
       const donationAmount = ethers.parseEther("1");
       console.log("Donation amount:", donationAmount.toString());
-      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
-    
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
       // Tenter de supprimer l'association avec un solde
-      await expect(donation.connect(owner).removeAssociation(asso1.address))
-        .to.be.revertedWith("Association has remaining funds. Please withdraw before removing.");
+      await expect(
+        donation.connect(owner).removeAssociation(asso1.address)
+      ).to.be.revertedWith(
+        "Association has remaining funds. Please withdraw before removing"
+      );
     });
-    
+
     it("should allow removing an association after withdrawing all funds", async function () {
-      const { donation, owner, asso1, donor1 } = await loadFixture(deployDonationFixture);
-    
-      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-      
+      const { donation, owner, asso1, donor1 } = await loadFixture(
+        deployDonationFixture
+      );
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+
       const donationAmount = ethers.parseEther("1");
       console.log("Donation amount:", donationAmount.toString());
-      await donation.connect(donor1).donateToAssociation(asso1.address, donationAmount, { value: donationAmount });
-    
+      await donation
+        .connect(donor1)
+        .donateToAssociation(asso1.address, donationAmount, {
+          value: donationAmount,
+        });
+
       const recipient = ethers.Wallet.createRandom();
-    
+
       // transfer all funds to recipient
-      const amountToTransfer = donationAmount; 
-      await donation.connect(asso1).transferFunds(
-        recipient.address,
-        amountToTransfer,
-        "Withdrawal of all funds"
-      );
-    
+      const amountToTransfer = donationAmount;
+      await donation
+        .connect(asso1)
+        .transferFunds(
+          recipient.address,
+          amountToTransfer,
+          "Withdrawal of all funds"
+        );
+
       // Maintenant, la suppression devrait réussir
       await expect(donation.connect(owner).removeAssociation(asso1.address))
         .to.emit(donation, "AssociationRemoved")
@@ -665,14 +750,20 @@ describe("Donation", function () {
     });
 
     it("should reset association whitelisted status when removing", async function () {
-      const { donation, owner, asso1 } = await loadFixture(deployDonationFixture);
-    
-      await donation.connect(owner).addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+      const { donation, owner, asso1 } = await loadFixture(
+        deployDonationFixture
+      );
+
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
       await donation.connect(owner).removeAssociation(asso1.address);
-    
-      const associationDetails = await donation.getAssociationDetails(asso1.address);
+
+      const associationDetails = await donation.getAssociationDetails(
+        asso1.address
+      );
       console.log("Association details:", associationDetails);
-    
+
       // Supposons que whitelisted soit le 4ème élément du tableau (index 3)
       expect(associationDetails[3]).to.be.false;
     });
@@ -1241,29 +1332,29 @@ describe("Donation", function () {
       const { donation, donor1, asso1, recipient, owner } = await loadFixture(
         deployDonationFixture
       );
-  
+
       // Whitelist the association
       await donation
         .connect(owner)
         .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  
+
       // Fund the contract
       const fundAmount = ethers.parseEther("10");
       await donation
         .connect(donor1)
         .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
-  
+
       const transferAmount = ethers.parseEther("1");
       const purpose = "Test transfer";
-  
+
       // Perform the transfer
       await donation
         .connect(asso1)
         .transferFunds(recipient.address, transferAmount, purpose);
-  
+
       // Get the transfers for the association
       const transfers = await donation.getTransfersByAssociation(asso1.address);
-  
+
       // Check that the transfer was recorded correctly
       expect(transfers.length).to.equal(1);
       expect(transfers[0].recipient).to.equal(recipient.address);
@@ -1274,36 +1365,36 @@ describe("Donation", function () {
         BigInt(60)
       ); // Allow 60 seconds of difference
     });
-  
+
     it("should correctly record multiple transfers", async function () {
       const { donation, donor1, asso1, recipient, owner } = await loadFixture(
         deployDonationFixture
       );
-  
+
       // Whitelist the association
       await donation
         .connect(owner)
         .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
-  
+
       // Fund the contract
       const fundAmount = ethers.parseEther("10");
       await donation
         .connect(donor1)
         .donateToAssociation(asso1.address, fundAmount, { value: fundAmount });
-  
+
       // Perform multiple transfers
       for (let i = 0; i < 3; i++) {
         const transferAmount = ethers.parseEther("1");
         const purpose = `Test transfer ${i + 1}`;
-  
+
         await donation
           .connect(asso1)
           .transferFunds(recipient.address, transferAmount, purpose);
       }
-  
+
       // Get the transfers for the association
       const transfers = await donation.getTransfersByAssociation(asso1.address);
-  
+
       // Check that all transfers were recorded correctly
       expect(transfers.length).to.equal(3);
       for (let i = 0; i < 3; i++) {
@@ -1312,10 +1403,10 @@ describe("Donation", function () {
         expect(transfers[i].purpose).to.equal(`Test transfer ${i + 1}`);
       }
     });
-  
+
     it("should return empty array for association with no transfers", async function () {
       const { donation, asso1 } = await loadFixture(deployDonationFixture);
-  
+
       const transfers = await donation.getTransfersByAssociation(asso1.address);
       expect(transfers.length).to.equal(0);
     });
@@ -1677,10 +1768,18 @@ describe("Donation", function () {
       const withdrawalAmount2 = ethers.parseEther("2");
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount1,
+          "First withdrawal"
+        );
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount2,
+          "Second withdrawal"
+        );
 
       const totalWithdrawals = await donation.getTotalWithdrawals(
         asso1.address
@@ -1696,10 +1795,18 @@ describe("Donation", function () {
       const withdrawalAmount2 = ethers.parseEther("2");
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount1, "Asso1 withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount1,
+          "Asso1 withdrawal"
+        );
       await donation
         .connect(asso2)
-        .transferFunds(recipient.address, withdrawalAmount2, "Asso2 withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount2,
+          "Asso2 withdrawal"
+        );
 
       const totalWithdrawalsAsso1 = await donation.getTotalWithdrawals(
         asso1.address
@@ -1722,7 +1829,11 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount1,
+          "First withdrawal"
+        );
       let totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
       expect(totalWithdrawals).to.equal(
         calculateWithdrawalAfterCommission(withdrawalAmount1)
@@ -1730,7 +1841,11 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount2,
+          "Second withdrawal"
+        );
       totalWithdrawals = await donation.getTotalWithdrawals(asso1.address);
       const expectedTotal =
         calculateWithdrawalAfterCommission(withdrawalAmount1) +
@@ -1790,10 +1905,18 @@ describe("Donation", function () {
 
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount1, "First withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount1,
+          "First withdrawal"
+        );
       await donation
         .connect(asso1)
-        .transferFunds(recipient.address, withdrawalAmount2, "Second withdrawal");
+        .transferFunds(
+          recipient.address,
+          withdrawalAmount2,
+          "Second withdrawal"
+        );
 
       const accumulatedCommissions = await donation.getAccumulatedCommissions();
       const expectedCommission =
@@ -1820,9 +1943,8 @@ describe("Donation", function () {
     let donation, owner, donor1, donor2, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } = await loadFixture(
-        deployDonationFixture
-      ));
+      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } =
+        await loadFixture(deployDonationFixture));
 
       // Whitelist the associations
       await donation
@@ -2093,9 +2215,8 @@ describe("Donation", function () {
     let donation, owner, donor1, donor2, asso1, asso2, recipient;
 
     beforeEach(async function () {
-      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } = await loadFixture(
-        deployDonationFixture
-      ));
+      ({ donation, owner, donor1, donor2, asso1, asso2, recipient } =
+        await loadFixture(deployDonationFixture));
 
       // Whitelist the associations
       await donation
@@ -2346,7 +2467,8 @@ describe("Donation", function () {
         .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
 
       // Supprimez toutes les associations avant chaque test pour avoir un état initial propre
-      const currentAssociations = await donation.getWhitelistedAssociations();
+      const [currentAssociations, totalCount] =
+        await donation.getWhitelistedAssociations(0, 100);
       for (const association of currentAssociations) {
         await donation.connect(owner).removeAssociation(association);
       }
@@ -2360,24 +2482,45 @@ describe("Donation", function () {
         .connect(owner)
         .addAssociation(asso2.address, "Asso2", "456 Oak St", "RNA456");
 
-      const whitelistedAssociations =
-        await donation.getWhitelistedAssociations();
-      expect(whitelistedAssociations).to.include.members([
-        asso1.address,
-        asso2.address,
-      ]);
+      const [whitelistedAssociations, totalCount] =
+        await donation.getWhitelistedAssociations(0, 100);
+
+      expect(whitelistedAssociations).to.have.lengthOf(2);
+      expect(whitelistedAssociations).to.include(asso1.address);
+      expect(whitelistedAssociations).to.include(asso2.address);
+      expect(totalCount).to.equal(2);
     });
 
     it("should not include non-whitelisted addresses in the returned array", async function () {
-      const whitelistedAssociations =
-        await donation.getWhitelistedAssociations();
+   
+      await donation
+        .connect(owner)
+        .addAssociation(asso1.address, "Asso1", "123 Main St", "RNA123");
+    
+      const [whitelistedAssociations, totalCount] = await donation.getWhitelistedAssociations(0, 100);
       expect(whitelistedAssociations).to.not.include(nonAssociation);
+      expect(whitelistedAssociations).to.include(asso1.address);
+      expect(totalCount).to.equal(1);
     });
-
+    
     it("should return an empty array if no associations are whitelisted", async function () {
-      const whitelistedAssociations =
-        await donation.getWhitelistedAssociations();
+      // Get the whitelisted associations
+      const [whitelistedAssociations, totalCount] = await donation.getWhitelistedAssociations(0, 100);
+    
+      // Check that the total count is 0
+      expect(totalCount).to.equal(0);
+    
+      // Check that the returned array is empty
       expect(whitelistedAssociations).to.be.an("array").that.is.empty;
+    
+      // Check that calling with start index 0 and count 0 also works and returns an empty array
+      const [emptyAssociations, zeroCount] = await donation.getWhitelistedAssociations(0, 0);
+      expect(zeroCount).to.equal(0);
+      expect(emptyAssociations).to.be.an("array").that.is.empty;
+    
+      // Check that trying to get associations with a non-zero start index still reverts
+      await expect(donation.getWhitelistedAssociations(1, 100))
+        .to.be.revertedWith("Start index out of bounds");
     });
   });
 
