@@ -145,17 +145,17 @@ donateToAssociation
       ✔ should not allow association to donate to itself (43ms)
 ```
 
-  233 passing (21s)
+  234 passing (21s)
 
 -----------------------|----------|----------|----------|----------|----------------|
 File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 -----------------------|----------|----------|----------|----------|----------------|
- contracts\            |      100 |     87.5 |      100 |      100 |                |
-  Donation.sol         |      100 |    92.68 |      100 |      100 |                |
+ contracts\            |      100 |    85.88 |      100 |      100 |                |
+  Donation.sol         |      100 |       89 |      100 |      100 |                |
   DonationBadgeNFT.sol |      100 |    84.21 |      100 |      100 |                |
   DonationProofSBT.sol |      100 |    78.13 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
-All files              |      100 |     87.5 |      100 |      100 |                |
+All files              |      100 |    85.88 |      100 |      100 |                |
 -----------------------|----------|----------|----------|----------|----------------|
 ## Security
 To ensure the security of the smart contracts, we use the Slither static analysis tool. Slither helps to identify potential vulnerabilities in the smart contracts.
