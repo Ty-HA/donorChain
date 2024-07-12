@@ -3,6 +3,7 @@ import Image from "next/image";
 // import Projects from "@/components/Projects";
 import ProjectCard from "@/components/ProjectCard";
 import TotalDonations from "@/components/TotalDonations";
+import GetAllTransferFunds from "@/components/GetAllTransferFunds";
 import Contact from "@/components/Contact";
 
 const ButtonStart = () => {
@@ -125,6 +126,7 @@ const App = () => {
         
         <ProjectCard />
       </div>
+        <GetAllTransferFunds />
       <div id="projects" className="flex flex-col items-center w-full bg-gradient-to-r from-blue-900 to-blue-500 mt-10">
         <TotalDonations />
       </div>

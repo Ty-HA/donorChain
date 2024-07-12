@@ -113,30 +113,20 @@ export default function AssociationDashboard() {
           contractDonationAbi,
           provider
         );
-
-        const currentBlock = await provider.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 5000000);
-
-        const filter = contract.filters.FundsTransferred(
-          null,
-          null,
-          null,
-          null
-        );
-        const events = await contract.queryFilter(filter, fromBlock, "latest");
-
-        const formattedTransfers = events
-          .filter((event): event is ethers.EventLog => "args" in event)
-          .map((event) => ({
-            recipient: event.args[0],
-            amount: ethers.formatEther(event.args[1]),
-            purpose: event.args[2],
-            timestamp: new Date(Number(event.args[3]) * 1000).toLocaleString(),
-          }));
+  
+        const transferRecords = await contract.getTransfersByAssociation(userAddress);
+  
+        const formattedTransfers = transferRecords.map((record: any) => ({
+          recipient: record.recipient,
+          amount: ethers.formatEther(record.amount),
+          purpose: record.purpose,
+          timestamp: new Date(Number(record.timestamp) * 1000).toLocaleString(),
+        }));
+  
         console.log("Fetching transfers for address:", userAddress);
-        console.log("Events found:", events.length);
+        console.log("Transfers found:", formattedTransfers.length);
         console.log("Formatted transfers:", formattedTransfers);
-
+  
         setTransfers(formattedTransfers);
       } catch (error) {
         console.error("Error fetching transfer funds:", error);

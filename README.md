@@ -1,11 +1,20 @@
 # DonorChain Project
 https://donor-chain.vercel.app/
 
-## Overview
+# Overview
 
 DonorChain is a blockchain-based platform designed to bring transparency and efficiency to the process of donating to charities. By leveraging the power of Ethereum blockchain technology through Solidity and the Hardhat development environment, DonorChain ensures that donations are traceable, secure, and directly reach their intended associations without intermediaries.
 
-The front-end of DonorChain is built with Next.js, providing a seamless and responsive user experience. The application is deployed on Vercel, ensuring high availability and performance for users worldwide.
+
+
+# Getting Started
+These instructions will help you set up the project on your local machine for development and testing purposes.
+
+## Prerequisites
+- Node.js
+- Hardhat
+- Solidity
+- OpenZeppelin Contracts
 
 ## Features
 
@@ -23,12 +32,16 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 
 - **Solidity**: Smart contract development for handling donations and associations.
 - **Hardhat**: Ethereum development environment for compiling, deploying, testing, and debugging the smart contracts.
+- 
+## Project Structure
+- contracts/: Contains all the Solidity smart contracts.
+- DonationProofSBT.sol: The main SBT contract.
+- DonationBadgeNFT.sol: The NFT contract for badges.
+- Donation.sol: The main contract for handling donations.
+- scripts/: Contains the deployment scripts.
+- test/: Contains the test files written in JavaScript using Chai and Mocha.
 
-### Frontend
 
-- **Next.js**: React framework for building the user interface, providing server-side rendering for faster load times and better SEO.
-- **Vercel**: Deployment and hosting platform, offering automatic scaling and a global CDN.
-- **Contact**: Using web3form for contact section.
 
 ## Getting Started
 
@@ -40,7 +53,12 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
 
 ### Setting Up the Development Environment
 
-- FRONT
+### Frontend
+
+- **Next.js**: React framework for building the user interface, providing server-side rendering for faster load times and better SEO.
+- **Vercel**: Deployment and hosting platform, offering automatic scaling and a global CDN.
+- **Contact**: Using web3form for contact section.
+
 1. Clone the repository:
    
    ```bash
@@ -51,7 +69,7 @@ The front-end of DonorChain is built with Next.js, providing a seamless and resp
    ```
    Open http://localhost:3000 in your browser to view the application.
 
-- BACK
+### Backend
 
 ```
 cd DonorChain/back
