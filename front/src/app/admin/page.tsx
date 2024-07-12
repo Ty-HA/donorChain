@@ -3,6 +3,7 @@ import { useUserRole } from '@/hooks/userRole';
 import AssociationsList from "@/components/AssociationsList";
 import CheckCommissions from "@/components/CheckCommissions";
 import GetContractBalance from '@/components/GetContractBalance';
+import WithdrawCommissions from '@/components/WithdrawCommissions';
 import { contractDonationAddress } from '@/constants';
 import { Button } from "flowbite-react";
 
@@ -55,9 +56,8 @@ export default function Admin() {
         <AssociationsList />
         <CheckCommissions />
         <GetContractBalance />
-        <Button className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
-          Withdraw My Commissions
-        </Button>
+        <WithdrawCommissions />
+       
         
         <h2 className="text-red-500 pt-8 text-3xl">If emergency</h2>
         <Button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
