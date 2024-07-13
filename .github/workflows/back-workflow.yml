@@ -10,6 +10,10 @@ on:
     paths:
       - 'back/**'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   test:
     name: Test and Coverage Hardhat
@@ -35,26 +39,38 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Compile Contracts
-        run: npx hardhat compile
+      - name: Create .env file
+        run: |
+          echo ARBITRUM_SEPOLIA_RPC_URL=${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }} >> .env
+          echo PRIVATE_KEY=${{ secrets.PRIVATE_KEY }} >> .env
+
+      - name: Debug Environment Variables
+        run: |
+          if [ -n "$ARBITRUM_SEPOLIA_RPC_URL" ]; then
+            echo "ARBITRUM_SEPOLIA_RPC_URL is set"
+          else
+            echo "ARBITRUM_SEPOLIA_RPC_URL is not set"
+          fi
+          if [ -n "$PRIVATE_KEY" ]; then
+            echo "PRIVATE_KEY is set"
+          else
+            echo "PRIVATE_KEY is not set"
+          fi
         env:
           ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Compile Contracts
+        run: npx hardhat compile
 
       - name: Run Tests
         run: npx hardhat test
-        env:
-          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
       - name: Run Coverage
         run: npx hardhat coverage
-        env:
-          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
         with:
           name: coverage-report
-          path: back/coverage/
+          path: coverage/
