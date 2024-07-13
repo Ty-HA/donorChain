@@ -83,47 +83,61 @@ const GetAllTransferFunds: React.FC = () => {
   if (error) return <p className="text-black text-xl">Error: {error}</p>;
 
   return (
-    <>
-      <h2 className="text-4xl font-semibold text-center pt-12 text-black">
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="text-4xl font-semibold text-center mb-8 text-black">
         View All Transfer Funds
       </h2>
-      <p className="text-black px-32 pt-10">
-        Donation Transparency DonationChain includes a section that displays all
-        the fund transfers made by the associations. This ensures that as a
-        donor, you always know where your donations are going. You can see when
-        associations unlock funds after verification by the platform. This
-        feature provides transparency and accountability, giving donors
-        confidence that their contributions are being used as intended.
+      <p className="text-black mb-8">
+        Donation Transparency: this section displays all
+        the fund transfers made by the associations. This ensures that the
+        donor always know where their donations are going.
       </p>
 
-      <div className="container mx-auto p-4">
-        <h2 className="text-2xl font-bold mb-4">All Transfer Funds</h2>
-        <table className="min-w-full bg-white text-black text-left">
-          <thead>
+      <div className="overflow-x-auto">
+      <table className="min-w-full bg-white text-black border border-gray-300">
+          <thead className="bg-gray-300 hidden md:table-header-group">
             <tr>
-              <th className="px-4 py-2 text-black">From Association</th>
-              <th className="px-4 py-2 text-black">Wallet</th>
-              <th className="px-4 py-2 text-black">To Recipient</th>
-              <th className="px-4 py-2 text-black">Amount (ETH)</th>
-              <th className="px-4 py-2 text-black">Purpose</th>
-              <th className="px-4 py-2 text-black">Date</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">From Association</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">Wallet</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">To Recipient</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">Amount</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">Purpose</th>
+              <th className="px-4 py-2 text-left border-b border-gray-300">Date</th>
             </tr>
           </thead>
           <tbody>
             {transfers.map((transfer, index) => (
-              <tr key={index} className={index % 2 === 0 ? "bg-gray-100" : ""}>
-                <td className="border px-4 py-2">{transfer.associationName}</td>
-                <td className="border px-4 py-2">{transfer.association}</td>
-                <td className="border px-4 py-2">{transfer.recipient}</td>
-                <td className="border px-4 py-2">{transfer.amount}</td>
-                <td className="border px-4 py-2">{transfer.purpose}</td>
-                <td className="border px-4 py-2">{transfer.timestamp}</td>
+              <tr key={index} className="border-b border-gray-300 md:border-none block md:table-row ">
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300 bg-gray-200">
+                  <span className="font-bold md:hidden inline-block mb-2 ">From Association: </span>
+                  {" "}{transfer.associationName}
+                </td>
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300">
+                  <span className="font-bold md:hidden inline-block mb-2">Wallet: </span>
+                  {" "}{transfer.association}
+                </td>
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300">
+                  <span className="font-bold md:hidden inline-block mb-2">To Recipient: </span>
+                  {" "}{transfer.recipient}
+                </td>
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300">
+                  <span className="font-bold md:hidden inline-block mb-2">Amount: </span>
+                  {" "}{transfer.amount}{" "} ETH
+                </td>
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300">
+                  <span className="font-bold md:hidden inline-block mb-2">Purpose: </span>
+                  {" "}{transfer.purpose}
+                </td>
+                <td className="px-4 py-2 block md:table-cell border-b md:border-b-0 border-gray-300">
+                  <span className="font-bold md:hidden inline-block mb-2">Date: </span>
+                  {" "}{transfer.timestamp}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   );
 };
 
