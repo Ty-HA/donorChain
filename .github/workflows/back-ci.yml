@@ -1,0 +1,74 @@
+name: Back-end CI/CD
+
+on:
+  push:
+    branches: [back]
+    paths:
+      - 'back/**'
+  pull_request:
+    branches: [back]
+    paths:
+      - 'back/**'
+
+jobs:
+  test:
+    name: Test Smart Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.11.1'
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: 'back/node_modules'
+          key: ${{ runner.OS }}-node-${{ hashFiles('back/package-lock.json') }}
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Contracts
+        run: npx hardhat compile
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Run Tests
+        run: npx hardhat test
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+  deploy:
+    name: Deploy to Arbitrum Sepolia
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.11.1'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Deploy Contract
+        run: npx hardhat run scripts/deploy.js --network arbitrumSepolia
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          ARBISCAN_API_KEY: ${{ secrets.ARBISCAN_API_KEY }}
