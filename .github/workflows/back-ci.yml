@@ -1,4 +1,4 @@
-name: Back-end CI/CD
+name: Back-end CI
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Test Smart Contracts
+    name: Test and Coverage
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,28 +47,14 @@ jobs:
           ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
-  deploy:
-    name: Deploy to Arbitrum Sepolia
-    needs: test
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./back
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.11.1'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Deploy Contract
-        run: npx hardhat run scripts/deploy.js --network arbitrumSepolia
+      - name: Run Coverage
+        run: npx hardhat coverage
         env:
           ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          ARBISCAN_API_KEY: ${{ secrets.ARBISCAN_API_KEY }}
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: back/coverage/
