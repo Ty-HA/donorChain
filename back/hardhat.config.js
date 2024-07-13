@@ -3,6 +3,7 @@ require("@nomicfoundation/hardhat-verify");
 require('dotenv').config()
 
 const ARBITRUM_SEPOLIA_RPC_URL = process.env.ARBITRUM_SEPOLIA_RPC_URL || "";
+console.log("RPC URL: ", ARBITRUM_SEPOLIA_RPC_URL);
 const PK = process.env.PRIVATE_KEY || "";
 const ARBISCAN = process.env.ARBISCAN_API_KEY || "";
 
