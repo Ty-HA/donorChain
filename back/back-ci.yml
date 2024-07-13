@@ -1,35 +1,32 @@
-name: Back-end Workflow
+name: Test Suite
 
 on:
   push:
-    branches: [back]
-    paths:
-      - 'back/**'
+    branches: [main]
 
 jobs:
-  test:
-    name: Test Hardhat Back-end
+  tests:
+    name: Smart Contract Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./back
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Use Node.js 20.11.1
+        uses: actions/setup-node@v1
         with:
-          node-version: '16'
+          node-version: 20.11.1
 
       - name: Cache Node Modules
-        uses: actions/cache@v4
+        id: cache-node-modules
+        uses: actions/cache@v2
         with:
-          path: 'back/node_modules'
-          key: ${{ runner.OS }}-node-${{ hashFiles('back/package-lock.json') }}
+          path: 'node_modules'
+          key: node_modules-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Dependencies
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run Tests
-        run: npx hardhat test --network hardhat
+        run: npx hardhat test
