@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Test and Coverage Hardhat
+    name: Test Hardhat
     runs-on: ubuntu-latest
     defaults:
       run:
