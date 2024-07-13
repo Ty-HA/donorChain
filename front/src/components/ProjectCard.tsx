@@ -12,7 +12,7 @@ const ProjectDescription: string[] = [
   "Help Azar to continue his study",
   "Save Peter life",
   "Build School for poor students",
-  "Help Azar to continue his study",
+  "Help kids",
   "Save Peter life",
   "Build School for poor students",
 ];
