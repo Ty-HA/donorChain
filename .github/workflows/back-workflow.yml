@@ -37,12 +37,3 @@ jobs:
 
       - name: Run Tests
         run: npx hardhat test
-
-      - name: Run Coverage
-        run: npx hardhat coverage
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-report
-          path: back/coverage/
