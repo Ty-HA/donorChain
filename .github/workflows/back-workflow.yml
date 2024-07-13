@@ -1,4 +1,4 @@
-name: Back-end CI
+name: Back-end Workflow
 
 on:
   push:
@@ -57,4 +57,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: coverage-report
-          path: coverage/
+          path: back/coverage/
