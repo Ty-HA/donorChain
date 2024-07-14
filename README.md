@@ -10,11 +10,19 @@ DonorChain is a blockchain-based platform designed to bring transparency and eff
 # Getting Started
 These instructions will help you set up the project on your local machine for development and testing purposes.
 
-## Prerequisites
+## Prerequisites backend
 - Node.js
 - Hardhat
 - Solidity
 - OpenZeppelin Contracts
+  
+## Prerequisites frontend
+- NextJS
+- React
+- Taiwind and Flowbite-react
+- Rainbow kit
+- ethersJS
+- Wagmi
 
 ## Features
 
@@ -24,6 +32,8 @@ These instructions will help you set up the project on your local machine for de
 - **Secure Transactions**: Utilizes Ethereum blockchain for secure and immutable transactions.
 - **Rewarding**: Donors receive rewards for their contributions, incentivizing continued support for the causes they care about.
 - **Admin dashboard**: An administrative dashboard allows authorized admin to manage and monitor the platform effectively.
+- **Association dashboard**: An administrative dashboard allows authorized associations to manage the donations its received, they can transfer funds to a professional, check their balance etc.
+- **Proof SBT for Donor**: they got a unique SBT to prove their donation
 
 
 # Stack
@@ -32,7 +42,7 @@ These instructions will help you set up the project on your local machine for de
 
 - **Solidity**: Smart contract development for handling donations and associations.
 - **Hardhat**: Ethereum development environment for compiling, deploying, testing, and debugging the smart contracts.
-- 
+  
 ## Project Structure
 - contracts/: Contains all the Solidity smart contracts.
 - DonationProofSBT.sol: The main SBT contract.
@@ -65,8 +75,12 @@ These instructions will help you set up the project on your local machine for de
    git clone <repository-url>
    cd DonorChain/front
    npm install
-   npm run dev
+   
    ```
+   setup your .env with your own keys (check .env.example)
+   Then run
+   - npm run dev
+
    Open http://localhost:3000 in your browser to view the application.
 
 ### Backend
@@ -76,8 +90,10 @@ cd DonorChain/back
 npx hardhat compile
 npx hardhat node
 npx hardhat run scripts/deploy.js --network arbitrumSepolia
+// or
+npx hardhat run scripts/deploy.js --network localhost
 ```
-Deploy script was written to deploy and verify my 3 contracts
+Deploy script was written to deploy and verify 3 contracts
 
 ```
 Deploying contracts with the account: 0x8E9B6101776469f4F5e57d509fee35751dBbA54A
@@ -110,16 +126,16 @@ All addresses are correctly set!
 Deployment, verification, and initialization complete!
 ```
 Check the deployed smart contracts here:
-Donation
+- Donation
 https://sepolia.arbiscan.io/address/0x9B7af62F4D0F69A1f6063B99feda48FB3Cd529Fd#code
-DonationProofSBT
+- DonationProofSBT
 https://sepolia.arbiscan.io/address/0x71Ee6bb0b4B51F5c434B1e5522F624AE7B67ba29#code
-DonationBadgeNFT
+- DonationBadgeNFT
 https://sepolia.arbiscan.io/address/0xD572Cb7DA2778a362C6D9b50c9a73F1E1DCB786e#code
 
 
 
-## Smart contracts
+# Smart contracts
 
 ### Units tests
 How to running test
