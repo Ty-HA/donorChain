@@ -76,69 +76,69 @@ contract DonationBadgeNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /// @notice Mint a badge for a donor
-    /// @param _donor  The address of the donor
-    /// @param _totalDonated  The total amount donated by the donor
+    /// @param donor  The address of the donor
+    /// @param totalDonated  The total amount donated by the donor
     /// @return The token ID of the minted badge
     function mintBadge(
-        address _donor,
-        uint256 _totalDonated
+        address donor,
+        uint256 totalDonated
     ) external nonReentrant onlyDonationContract returns (uint256) {
-        require(_donor != address(0), "Invalid donor address");
-        Tier newTier = getTierForAmount(_totalDonated);
-        Tier oldTier = donorHighestTier[_donor];
+        require(donor != address(0), "Invalid donor address");
+        Tier newTier = getTierForAmount(totalDonated);
+        Tier oldTier = donorHighestTier[donor];
         require(
-            newTier > donorHighestTier[_donor],
+            newTier > donorHighestTier[donor],
             "Donor already has this tier or higher"
         );
 
         uint256 newTokenId = _nextTokenId++;
 
         badges[newTokenId] = Badge(newTier, block.timestamp);
-        donorHighestTier[_donor] = newTier;
+        donorHighestTier[donor] = newTier;
 
-        emit DonorTierUpdated(_donor, oldTier, newTier);
+        emit DonorTierUpdated(donor, oldTier, newTier);
 
-        _safeMint(_donor, newTokenId);
+        _safeMint(donor, newTokenId);
 
-        emit BadgeMinted(_donor, newTokenId, newTier);
+        emit BadgeMinted(donor, newTokenId, newTier);
 
         return newTokenId;
     }
 
     /// @notice Get the URI of a badge token
-    /// @param _tokenId  The token ID of the badge
+    /// @param tokenId  The token ID of the badge
     /// @return The URI of the badge token
     function tokenURI(
-        uint256 _tokenId
+        uint256 tokenId
     ) public view override returns (string memory) {
         require(
-            _exists(_tokenId),
+            _exists(tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-        return tierURIs[badges[_tokenId].tier];
+        return tierURIs[badges[tokenId].tier];
     }
 
     // ::::::::::::: SETTERS ::::::::::::: //
 
     /// @notice Set the URI for a tier
-    /// @param _tier  The tier for which to set the URI
-    /// @param _uri  The new URI for the tier
-    function setTierURI(Tier _tier, string memory _uri) external onlyOwner {
-        tierURIs[_tier] = _uri;
-        emit TierURIUpdated(_tier, _uri);
+    /// @param tier  The tier for which to set the URI
+    /// @param uri  The new URI for the tier
+    function setTierURI(Tier tier, string memory uri) external onlyOwner {
+        tierURIs[tier] = uri;
+        emit TierURIUpdated(tier, uri);
     }
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
     /// @notice Get the tier for a donation amount
-    /// @param _amount  The donation amount
+    /// @param amount  The donation amount
     /// @return The tier corresponding to the donation amount
-    function getTierForAmount(uint256 _amount) public pure returns (Tier) {
-        if (_amount >= GOLD_THRESHOLD) {
+    function getTierForAmount(uint256 amount) public pure returns (Tier) {
+        if (amount >= GOLD_THRESHOLD) {
             return Tier.Gold;
-        } else if (_amount >= SILVER_THRESHOLD) {
+        } else if (amount >= SILVER_THRESHOLD) {
             return Tier.Silver;
-        } else if (_amount >= BRONZE_THRESHOLD) {
+        } else if (amount >= BRONZE_THRESHOLD) {
             return Tier.Bronze;
         } else {
             return Tier.None;
@@ -146,16 +146,16 @@ contract DonationBadgeNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /// @notice Get the badges owned by a donor
-    /// @param _donor  The address of the donor
+    /// @param donor  The address of the donor
     /// @return An array of token IDs representing the badges owned by the donor
     function getDonorBadges(
-        address _donor
+        address donor
     ) external view returns (uint256[] memory) {
-        uint256 balance = balanceOf(_donor);
+        uint256 balance = balanceOf(donor);
         uint256[] memory tokenIds = new uint256[](balance);
         uint256 counter = 0;
         for (uint256 i = 0; i < _nextTokenId; i++) {
-            if (_exists(i) && ownerOf(i) == _donor) {
+            if (_exists(i) && ownerOf(i) == donor) {
                 tokenIds[counter] = i;
                 counter++;
             }
@@ -164,36 +164,36 @@ contract DonationBadgeNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /// @notice Check if a badge exists
-    /// @param _tokenId  The token ID of the badge
+    /// @param tokenId  The token ID of the badge
     /// @return A boolean indicating if the badge exists
-    function _exists(uint256 _tokenId) internal view returns (bool) {
-        return _ownerOf(_tokenId) != address(0);
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        return _ownerOf(tokenId) != address(0);
     }
 
     /// @notice Get the details of a badge
-    /// @param _tokenId  The token ID of the badge
+    /// @param tokenId  The token ID of the badge
     function getBadgeDetails(
-        uint256 _tokenId
+        uint256 tokenId
     ) external view returns (Tier tier, uint256 timestamp) {
-        require(_exists(_tokenId), "Badge does not exist");
-        Badge memory badge = badges[_tokenId];
+        require(_exists(tokenId), "Badge does not exist");
+        Badge memory badge = badges[tokenId];
         return (badge.tier, badge.timestamp);
     }
 
     /// @notice Get the highest tier owned by a donor
-    /// @param _donor  The address of the donor
+    /// @param donor  The address of the donor
     /// @return The highest tier owned by the donor
-    function getDonorHighestTier(address _donor) external view returns (Tier) {
-        return donorHighestTier[_donor];
+    function getDonorHighestTier(address donor) external view returns (Tier) {
+        return donorHighestTier[donor];
     }
 
     /// @notice Get the name of a tier
-    /// @param _tier  The tier
+    /// @param tier  The tier
     /// @return The name of the tier
-    function getTierName(Tier _tier) public pure returns (string memory) {
-        if (_tier == Tier.Gold) return "Gold";
-        if (_tier == Tier.Silver) return "Silver";
-        if (_tier == Tier.Bronze) return "Bronze";
+    function getTierName(Tier tier) public pure returns (string memory) {
+        if (tier == Tier.Gold) return "Gold";
+        if (tier == Tier.Silver) return "Silver";
+        if (tier == Tier.Bronze) return "Bronze";
         return "None";
     }
 
@@ -229,11 +229,11 @@ contract DonationBadgeNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /// @notice Burn a token
-    /// @param _tokenId The token ID to burn
-    function burn(uint256 _tokenId) external {
-        require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
-        require(_exists(_tokenId), "Badge does not exist");
-        _burn(_tokenId);
-        delete badges[_tokenId];
+    /// @param tokenId The token ID to burn
+    function burn(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "Only token owner can burn");
+        require(_exists(tokenId), "Badge does not exist");
+        _burn(tokenId);
+        delete badges[tokenId];
     }
 }

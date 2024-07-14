@@ -1,13 +1,19 @@
-name: Test Suite
+name: Test Back-end
 
 on:
   push:
-    branches: [main]
+    branches: [back]
+    paths:
+      - 'back/**'  
 
 jobs:
   tests:
     name: Smart Contract Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back  
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -21,8 +27,8 @@ jobs:
         id: cache-node-modules
         uses: actions/cache@v2
         with:
-          path: 'node_modules'
-          key: node_modules-${{ hashFiles('package-lock.json') }}
+          path: 'back/node_modules'  
+          key: back-node_modules-${{ hashFiles('back/package-lock.json') }}  
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
@@ -30,3 +36,7 @@ jobs:
 
       - name: Run Tests
         run: npx hardhat test
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          ARBISCAN_API_KEY: ${{ secrets.ARBISCAN_API_KEY }}

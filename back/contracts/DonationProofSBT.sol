@@ -88,48 +88,48 @@ contract DonationProofSBT is
     }
 
     /// @notice Mint a new token with the donation proof
-    /// @param _donor The donor address
-    /// @param _amount The donation amount
-    /// @param _association The association address
-    /// @param _blockNumber The block number of the donation
+    /// @param donor The donor address
+    /// @param amount The donation amount
+    /// @param association The association address
+    /// @param blockNumber The block number of the donation
     /// @return The token ID
     function mint(
-        address _donor,
-        uint256 _amount,
-        address _association,
-        uint256 _blockNumber
+        address donor,
+        uint256 amount,
+        address association,
+        uint256 blockNumber
     ) external nonReentrant onlyDonationContract returns (uint256) {
-        require(_donor != address(0), "Invalid donor address");
+        require(donor != address(0), "Invalid donor address");
         require(donationContract != address(0), "Donation contract not set");
-        require(_amount > 0, "Donation amount must be greater than 0");
-        require(_association != address(0), "Invalid association address");
+        require(amount > 0, "Donation amount must be greater than 0");
+        require(association != address(0), "Invalid association address");
         require(
-            _blockNumber <= block.number,
+            blockNumber <= block.number,
             "Block number must be in the past"
         );
 
-        emit MintAttempt(msg.sender, donationContract, _donor);
+        emit MintAttempt(msg.sender, donationContract, donor);
 
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
 
         // Update state before external interactions
         donationProofs[tokenId] = DonationProof(
-            _amount,
-            _association,
+            amount,
+            association,
             block.timestamp,
-            _blockNumber
+            blockNumber
         );
 
         // External call
-        _safeMint(_donor, tokenId);
+        _safeMint(donor, tokenId);
 
         emit DonationProofMinted(
-            _donor,
-            _amount,
-            _association,
+            donor,
+            amount,
+            association,
             block.timestamp,
-            _blockNumber,
+            blockNumber,
             tokenId
         );
 
@@ -137,16 +137,16 @@ contract DonationProofSBT is
     }
 
     /// @notice Returns the full URI for a given token's metadata
-    /// @param _tokenId The token ID
+    /// @param tokenId The token ID
     /// @return Full URI for the token's metadata
     function tokenURI(
-        uint256 _tokenId
+        uint256 tokenId
     ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         require(
-            _exists(_tokenId),
+            _exists(tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-        return string(abi.encodePacked(_baseURI(), _tokenId.toString()));
+        return string(abi.encodePacked(_baseURI(), tokenId.toString()));
     }
 
     /// @notice Returns the base URI for the metadata
@@ -158,26 +158,26 @@ contract DonationProofSBT is
     // ::::::::::::: GETTERS ::::::::::::: //
 
     /// @notice Returns the donation proof for a given token ID
-    /// @param _tokenId The token ID
+    /// @param tokenId The token ID
     /// @return The donation proof
     function getDonationProof(
-        uint256 _tokenId
+        uint256 tokenId
     ) external view returns (DonationProof memory) {
-        require(_exists(_tokenId), "Token does not exist");
-        return donationProofs[_tokenId];
+        require(_exists(tokenId), "Token does not exist");
+        return donationProofs[tokenId];
     }
 
     /// @notice Returns all the tokens owned by the donor
-    /// @param _donor The donor address
+    /// @param donor The donor address
     /// @return An array of token IDs owned by the donor
     function getDonorTokens(
-        address _donor
+        address donor
     ) external view returns (uint256[] memory) {
-        uint256 tokenCount = balanceOf(_donor);
+        uint256 tokenCount = balanceOf(donor);
         uint256[] memory tokensId = new uint256[](tokenCount);
         uint256 index = 0;
         for (uint256 i = 0; i < _tokenIdCounter && index < tokenCount; i++) {
-            if (_exists(i) && ownerOf(i) == _donor) {
+            if (_exists(i) && ownerOf(i) == donor) {
                 tokensId[index] = i;
                 index++;
             }
@@ -223,18 +223,19 @@ contract DonationProofSBT is
     }
 
     /// @notice Burn a token
-    /// @param _tokenId The token ID to burn
-    function burn(uint256 _tokenId) external {
-        require(ownerOf(_tokenId) == msg.sender, "Only token owner can burn");
-        require(_exists(_tokenId), "Token does not exist");
-        _burn(_tokenId);
-        delete donationProofs[_tokenId];
+    /// @param tokenId The token ID to burn
+    function burn(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "Only token owner can burn");
+        require(_exists(tokenId), "Token does not exist");
+        _burn(tokenId);
+        delete donationProofs[tokenId];
     }
 
     /// @notice Check if a token exists
+    /// @param tokenId The token ID
     /// @return True if the token exists, false otherwise
-    function _exists(uint256 _tokenId) internal view returns (bool) {
-        return _ownerOf(_tokenId) != address(0);
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        return _ownerOf(tokenId) != address(0);
     }
 
     function supportsInterface(
