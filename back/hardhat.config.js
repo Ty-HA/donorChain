@@ -2,12 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-verify");
 require('dotenv').config()
 
-const ARBITRUM_SEPOLIA_RPC_URL = process.env.ARBITRUM_SEPOLIA_RPC_URL || "";
-console.log("RPC URL: ", ARBITRUM_SEPOLIA_RPC_URL);
-const PK = process.env.PRIVATE_KEY || "";
-const ARBISCAN = process.env.ARBISCAN_API_KEY || "";
-
-module.exports = {
+const config = {
   solidity: "0.8.24",
   paths: {
     sources: "./contracts",
@@ -19,17 +14,24 @@ module.exports = {
     },
   },
   networks: {
-    arbitrumSepolia: {
-      url: ARBITRUM_SEPOLIA_RPC_URL,
-      accounts: [`0x${PK}`],
-      chainId: 421614
-    },
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     }
-  },
-  etherscan: {
-    apiKey: ARBISCAN
-  },
+  }
 };
+
+if (process.env.ARBISCAN_API_KEY) {
+  config.etherscan = { apiKey: process.env.ARBISCAN_API_KEY };
+  config.sourcify = { enabled: true };
+}
+
+if (process.env.ARBITRUM_SEPOLIA_RPC_URL && process.env.PRIVATE_KEY) {
+  config.networks.arbitrumSepolia = {
+    url: process.env.ARBITRUM_SEPOLIA_RPC_URL,
+    accounts: [`0x${process.env.PRIVATE_KEY}`],
+    chainId: 421614
+  };
+}
+
+module.exports = config;
