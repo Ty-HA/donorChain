@@ -70,8 +70,6 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     mapping(address => uint256) public totalWithdrawals;
     /// @notice A mapping of whitelisted associations
     mapping(address => Association) public associations;
-    /// @notice A mapping of association indices
-    mapping(address => uint256) private associationId;
     /// @notice A mapping of total donations made to each association
     mapping(address => uint256) public totalDonationsToAssociation;
     /// @notice A mapping of donations made to each association
@@ -128,41 +126,41 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     event MaxWhitelistedUpdated(uint256 oldMax, uint256 newMax);
 
     /// @dev Sets the original owner of the contract upon deployment
-    /// @param _sbtContractAddress The address of the DonationProofSBT contract
-    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
+    /// @param sbtContractAddress The address of the DonationProofSBT contract
+    /// @param badgeContractAddress The address of the DonationBadgeNFT contract
     constructor(
-        address _sbtContractAddress,
-        address _badgeContractAddress
+        address sbtContractAddress,
+        address badgeContractAddress
     ) Ownable(msg.sender) {
-        sbtContract = DonationProofSBT(_sbtContractAddress);
-        badgeContract = DonationBadgeNFT(_badgeContractAddress);
+        sbtContract = DonationProofSBT(sbtContractAddress);
+        badgeContract = DonationBadgeNFT(badgeContractAddress);
     }
 
     /// @notice Sets the address of the DonationBadgeNFT contract to mint badges for donors as rewards for their donations
-    /// @param _badgeContractAddress The address of the DonationBadgeNFT contract
+    /// @param badgeContractAddress The address of the DonationBadgeNFT contract
     function setBadgeContract(
-        address _badgeContractAddress
+        address badgeContractAddress
     ) external onlyOwner {
         require(
-            _badgeContractAddress != address(0),
+            badgeContractAddress != address(0),
             "Invalid badge contract address"
         );
-        badgeContract = DonationBadgeNFT(_badgeContractAddress);
-        emit BadgeContractSet(_badgeContractAddress);
+        badgeContract = DonationBadgeNFT(badgeContractAddress);
+        emit BadgeContractSet(badgeContractAddress);
     }
 
     uint256 public maxWhitelisted = 100;
 
     /// @notice Sets the maximum number of whitelisted associations
-    /// @param _newMax The new maximum number of whitelisted associations
-    function setMaxWhitelisted(uint256 _newMax) external onlyOwner {
+    /// @param newMax The new maximum number of whitelisted associations
+    function setMaxWhitelisted(uint256 newMax) external onlyOwner {
         require(
-            _newMax > maxWhitelisted,
+            newMax > maxWhitelisted,
             "New max must be greater than current max"
         );
         uint oldMax = maxWhitelisted;
-        maxWhitelisted = _newMax;
-        emit MaxWhitelistedUpdated(oldMax, _newMax);
+        maxWhitelisted = newMax;
+        emit MaxWhitelistedUpdated(oldMax, newMax);
     }
 
     // ::::::::::::: MODIFIERS ::::::::::::: //
@@ -178,24 +176,24 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     // ::::::::::::: ASSOCIATIONS MANAGEMENT ::::::::::::: //
 
     /// @notice Adds an association to the whitelist
-    /// @param _association The address of the association to add
-    /// @param _name The name of the association
-    /// @param _postalAddress The postal address of the association
-    /// @param _rnaNumber The RNA number of the association
+    /// @param association The address of the association to add
+    /// @param name The name of the association
+    /// @param postalAddress The postal address of the association
+    /// @param rnaNumber The RNA number of the association
     function addAssociation(
-        address _association,
-        string memory _name,
-        string memory _postalAddress,
-        string memory _rnaNumber
+        address association,
+        string memory name,
+        string memory postalAddress,
+        string memory rnaNumber
     ) external onlyOwner {
-        require(_association != address(0), "Invalid address");
+        require(association != address(0), "Invalid address");
         require(
-            !isWhitelisted[_association],
+            !isWhitelisted[association],
             "Association already whitelisted"
         );
-        require(bytes(_name).length > 0, "Association name cannot be empty");
+        require(bytes(name).length > 0, "Association name cannot be empty");
         require(
-            bytes(_postalAddress).length > 0,
+            bytes(postalAddress).length > 0,
             "Postal address cannot be empty"
         );
         require(
@@ -203,137 +201,136 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             "Maximum whitelisted associations reached"
         );
 
-        associations[_association] = Association({
-            name: _name,
-            postalAddress: _postalAddress,
-            rnaNumber: _rnaNumber,
+        associations[association] = Association({
+            name: name,
+            postalAddress: postalAddress,
+            rnaNumber: rnaNumber,
             balance: 0,
-            addr: _association,
+            addr: association,
             whitelisted: true,
             lastDeposit: block.timestamp
         });
 
-        isWhitelisted[_association] = true;
-        whitelistedAddresses[whitelistedCount] = _association;
-        whitelistedIndices[_association] = whitelistedCount;
+        isWhitelisted[association] = true;
+        whitelistedAddresses[whitelistedCount] = association;
+        whitelistedIndices[association] = whitelistedCount;
         whitelistedCount++;
 
-        emit AssociationAdded(_association, _name, _postalAddress, _rnaNumber);
+        emit AssociationAdded(association, name, postalAddress, rnaNumber);
     }
 
     /// @notice Update association information if they want to change their wallet address
-    /// @param _addr The current address of the association
-    /// @param _newAddr The new address of the association
+    /// @param addr The current address of the association
+    /// @param newAddr The new address of the association
 
     function updateAssociationWalletAddr(
-        address _addr,
-        address _newAddr
+        address addr,
+        address newAddr
     ) external onlyOwner {
-        require(isWhitelisted[_addr], "Association not whitelisted");
-        require(!isWhitelisted[_newAddr], "New address already whitelisted");
-        require(_newAddr != address(0), "Invalid address");
+        require(isWhitelisted[addr], "Association not whitelisted");
+        require(!isWhitelisted[newAddr], "New address already whitelisted");
+        require(newAddr != address(0), "Invalid address");
 
         // Save the association data
-        Association memory updatedAssociation = associations[_addr];
+        Association memory updatedAssociation = associations[addr];
         // Update the address in the struct
-        updatedAssociation.addr = _newAddr;
+        updatedAssociation.addr = newAddr;
 
         // Update the mappings
-        uint256 index = whitelistedIndices[_addr];
-        whitelistedAddresses[index] = _newAddr;
-        whitelistedIndices[_newAddr] = index;
+        uint256 index = whitelistedIndices[addr];
+        whitelistedAddresses[index] = newAddr;
+        whitelistedIndices[newAddr] = index;
         // Remove the old entry
-        delete associations[_addr];
+        delete associations[addr];
         // Add the updated association with the new address as the key
-        associations[_newAddr] = updatedAssociation;
+        associations[newAddr] = updatedAssociation;
 
         // Update associationList
         // Update whitelist status
-        isWhitelisted[_addr] = false;
-        isWhitelisted[_newAddr] = true;
+        isWhitelisted[addr] = false;
+        isWhitelisted[newAddr] = true;
 
-        emit AssociationWalletAddrUpdated(_addr, _newAddr);
+        emit AssociationWalletAddrUpdated(addr, newAddr);
     }
 
     /// @notice Update association information if they want to change their postal address
-    /// @param _addr The wallet address of the association
-    /// @param _newPostalAddress The new postal address of the association
+    /// @param addr The wallet address of the association
+    /// @param newPostalAddress The new postal address of the association
     function updateAssociationPostalAddr(
-        address _addr,
-        string memory _newPostalAddress
+        address addr,
+        string memory newPostalAddress
     ) external onlyOwner {
-        require(isWhitelisted[_addr], "Association not whitelisted");
-        require(bytes(_newPostalAddress).length > 0, "Invalid postal address");
+        require(isWhitelisted[addr], "Association not whitelisted");
+        require(bytes(newPostalAddress).length > 0, "Invalid postal address");
 
         // Update the association's postal address
-        associations[_addr].postalAddress = _newPostalAddress;
+        associations[addr].postalAddress = newPostalAddress;
 
-        emit AssociationUpdated(_addr, _newPostalAddress);
+        emit AssociationUpdated(addr, newPostalAddress);
     }
 
     /// @notice Update association information if they want to change their name
-    /// @param _addr The wallet address of the association
-    /// @param _newName The new name of the association
+    /// @param addr The wallet address of the association
+    /// @param newName The new name of the association
     function updateAssociationName(
-        address _addr,
-        string memory _newName
+        address addr,
+        string memory newName
     ) external onlyOwner {
-        require(isWhitelisted[_addr], "Association not whitelisted");
-        require(bytes(_newName).length > 0, "Invalid Name");
+        require(isWhitelisted[addr], "Association not whitelisted");
+        require(bytes(newName).length > 0, "Invalid Name");
 
         // Update the association's name
-        associations[_addr].name = _newName;
+        associations[addr].name = newName;
 
-        emit AssociationNameUpdated(_addr, _newName);
+        emit AssociationNameUpdated(addr, newName);
     }
 
     /// @notice Removes an association from the whitelist
-    /// @param _association The address of the association to remove
-    function removeAssociation(address _association) external onlyOwner {
-        require(isWhitelisted[_association], "Association not whitelisted");
+    /// @param association The address of the association to remove
+    function removeAssociation(address association) external onlyOwner {
+        require(isWhitelisted[association], "Association not whitelisted");
         require(
-            associations[_association].balance == 0,
+            associations[association].balance == 0,
             "Association has remaining funds. Please withdraw before removing"
         );
 
-        uint256 indexToRemove = whitelistedIndices[_association];
+        uint256 indexToRemove = whitelistedIndices[association];
         address lastAddress = whitelistedAddresses[whitelistedCount - 1];
 
         whitelistedAddresses[indexToRemove] = lastAddress;
         whitelistedIndices[lastAddress] = indexToRemove;
 
         delete whitelistedAddresses[whitelistedCount - 1];
-        delete whitelistedIndices[_association];
+        delete whitelistedIndices[association];
 
-        isWhitelisted[_association] = false;
+        isWhitelisted[association] = false;
         whitelistedCount--;
 
-        delete associations[_association];
+        delete associations[association];
 
-        emit AssociationRemoved(_association);
+        emit AssociationRemoved(association);
     }
 
     // ::::::::::::: DONATION MANAGEMENT ::::::::::::: //
 
     /// @notice Allows donors to donate to the contract
-    /// @param _association The address of the association to donate to
-    /// @param _amount The amount they want to donate
-
+    /// @param association The address of the association to donate to
+    /// @param amount The amount they want to donate
     function donateToAssociation(
-        address _association,
-        uint256 _amount
+        address association,
+        uint256 amount
     ) public payable nonReentrant whenNotPaused {
-        require(_amount > 0, "Donation amount must be greater than zero");
+        require(amount > 0, "Donation amount must be greater than zero");
         require(
-            msg.value == _amount,
+            msg.value == amount,
             "Sent amount does not match specified amount"
         );
         require(
-            associations[_association].whitelisted,
+            associations[association].whitelisted,
             "Association is not whitelisted"
         );
         require(
-            msg.sender != _association,
+            msg.sender != association,
             "Association cannot donate to itself"
         );
         require(address(sbtContract) != address(0), "SBT contract not set");
@@ -345,20 +342,20 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
             timestamp: block.timestamp,
             blockNumber: block.number
         });
-        donationsByAssociation[_association].push(newDonation);
+        donationsByAssociation[association].push(newDonation);
 
         // Update the association's balance
-        associations[_association].balance += _amount;
-        associations[_association].lastDeposit = block.timestamp;
+        associations[association].balance += amount;
+        associations[association].lastDeposit = block.timestamp;
 
-        totalDonationsFromDonor[msg.sender] += _amount;
-        totalDonationsToAssociation[_association] += _amount;
+        totalDonationsFromDonor[msg.sender] += amount;
+        totalDonationsToAssociation[association] += amount;
 
         // Mint SBT as proof of donation
         uint256 tokenId = DonationProofSBT(sbtContract).mint(
             msg.sender,
-            _amount,
-            _association,
+            amount,
+            association,
             block.number
         );
 
@@ -375,8 +372,8 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
 
         emit DonationReceived(
             msg.sender,
-            _amount,
-            _association,
+            amount,
+            association,
             tokenId,
             block.timestamp,
             block.number
@@ -386,46 +383,46 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     /// @notice Allows whitelisted associations to transfer their ether to a specific recipient for a specified purpose
     /// This function is protected against reentrancy attacks by using the `nonReentrant` modifier.
     /// The nonReentrant modifier prevents such reentrancy attacks by ensuring that no external calls can be made to the contract while it is still executing.
-    /// @param _recipient The address to transfer the ether to
-    /// @param _amount The amount of ether to transfer
-    /// @param _purpose The purpose of the transfer
+    /// @param recipient The address to transfer the ether to
+    /// @param amount The amount of ether to transfer
+    /// @param purpose The purpose of the transfer
     function transferFunds(
-        address payable _recipient,
-        uint256 _amount,
-        string calldata _purpose
+        address payable recipient,
+        uint256 amount,
+        string calldata purpose
     ) external onlyAssociation nonReentrant whenNotPaused {
         // 5% commission on each transfer
-        uint256 _commission = (_amount * 5) / 100;
-        uint256 _amountAfterCommission = _amount - _commission;
-        require(_recipient != msg.sender, "Cannot transfer to own address");
+        uint256 commission = (amount * 5) / 100;
+        uint256 amountAfterCommission = amount - commission;
+        require(recipient != msg.sender, "Cannot transfer to own address");
         require(
-            _amountAfterCommission + _commission <= address(this).balance,
+            amountAfterCommission + commission <= address(this).balance,
             "Insufficient contract balance for transfer"
         );
-        require(_recipient != address(0), "Invalid recipient address");
+        require(recipient != address(0), "Invalid recipient address");
 
-        totalWithdrawals[msg.sender] += _amountAfterCommission;
-        associations[msg.sender].balance -= _amount;
-        accumulatedCommissions += _commission;
+        totalWithdrawals[msg.sender] += amountAfterCommission;
+        associations[msg.sender].balance -= amount;
+        accumulatedCommissions += commission;
 
         associationTransfers[msg.sender].push(
             TransferRecord({
-                recipient: _recipient,
-                amount: _amount,
-                purpose: _purpose,
+                recipient: recipient,
+                amount: amount,
+                purpose: purpose,
                 timestamp: block.timestamp
             })
         );
 
-        emit CommissionAccumulated(_commission);
+        emit CommissionAccumulated(commission);
         emit FundsTransferred(
-            _recipient,
-            _amountAfterCommission,
-            _purpose,
+            recipient,
+            amountAfterCommission,
+            purpose,
             block.timestamp,
             block.number
         );
-        _recipient.transfer(_amountAfterCommission);
+        recipient.transfer(amountAfterCommission);
     }
 
     /// @notice Owner can withdraw accumulated commissions
@@ -442,14 +439,14 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     // ::::::::::::: SBT ::::::::::::: //
 
     /// @notice Sets the address of the DonationProofSBT contract
-    /// @param _sbtContractAddress The address of the DonationProofSBT contract
-    function setSBTContract(address _sbtContractAddress) external onlyOwner {
+    /// @param sbtContractAddress The address of the DonationProofSBT contract
+    function setSBTContract(address sbtContractAddress) external onlyOwner {
         require(
-            _sbtContractAddress != address(0),
+            sbtContractAddress != address(0),
             "Invalid SBT contract address"
         );
-        sbtContract = DonationProofSBT(_sbtContractAddress);
-        emit SBTContractSet(_sbtContractAddress);
+        sbtContract = DonationProofSBT(sbtContractAddress);
+        emit SBTContractSet(sbtContractAddress);
     }
 
     // ::::::::::::: GETTERS ::::::::::::: //
@@ -485,20 +482,20 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Retrieves the total donations made by a specific donor
-    /// @param _donor The address of the donor
+    /// @param donor The address of the donor
     /// @return The total amount donated by the specified address
     function getTotalDonationsFromOneDonor(
-        address _donor
+        address donor
     ) external view returns (uint256) {
-        return totalDonationsFromDonor[_donor];
+        return totalDonationsFromDonor[donor];
     }
 
     /// @notice Retrieves the total withdrawals made by a specific address
     /// @return The total amount withdrawn by the specified address
     function getTotalWithdrawals(
-        address _association
+        address association
     ) external view returns (uint256) {
-        return totalWithdrawals[_association];
+        return totalWithdrawals[association];
     }
 
     /// @notice Retrieves the accumulated commissions
@@ -514,39 +511,39 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Retrieves the balance of a specific association
-    /// @param _association The address of the association
+    /// @param association The address of the association
     /// @return The balance of the specified association
     function getAssociationBalance(
-        address _association
+        address association
     ) public view returns (uint256) {
-        return associations[_association].balance;
+        return associations[association].balance;
     }
 
     /// @notice Retrieves the last deposit timestamp of a specific association
-    /// @param _association The address of the association
+    /// @param association The address of the association
     /// @return The timestamp of the last deposit made to the specified association
     function getAssociationLastDeposit(
-        address _association
+        address association
     ) public view returns (uint256) {
-        return associations[_association].lastDeposit;
+        return associations[association].lastDeposit;
     }
 
     /// @notice Retrieves the total donations received by a specific association
-    /// @param _association The address of the association
+    /// @param association The address of the association
     /// @return The total amount donated to the specified association
     function getTotalDonationsToAssociation(
-        address _association
+        address association
     ) external view returns (uint256) {
-        return totalDonationsToAssociation[_association];
+        return totalDonationsToAssociation[association];
     }
 
     /// @notice Retrieves the list of donations made to a specific association
-    /// @param _association The address of the association*
+    /// @param association The address of the association*
     /// @return An array of donations made to the specified association
     function getDonationsByAssociation(
-        address _association
+        address association
     ) external view returns (DonationRecord[] memory) {
-        return donationsByAssociation[_association];
+        return donationsByAssociation[association];
     }
 
     /// @notice Retrieves the list of whitelisted associations
@@ -579,16 +576,16 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Retrieves the details of a specific association
-    /// @param _association The address of the association
+    /// @param association The address of the association
     /// @return The details of the association including name, postal address, RNA number, and whitelisted status
     function getAssociationDetails(
-        address _association
+        address association
     )
         external
         view
         returns (string memory, string memory, string memory, bool)
     {
-        Association memory assoc = associations[_association];
+        Association memory assoc = associations[association];
         return (
             assoc.name,
             assoc.postalAddress,
@@ -598,12 +595,12 @@ contract Donation is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Get the list of transfers made by a specific association
-    /// @param _association The address of the association
+    /// @param association The address of the association
     /// @return An array of transfers made by the specified association
     function getTransfersByAssociation(
-        address _association
+        address association
     ) external view returns (TransferRecord[] memory) {
-        return associationTransfers[_association];
+        return associationTransfers[association];
     }
 
     // ::::::::::::: PAUSABLE  ::::::::::::: //
