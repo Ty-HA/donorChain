@@ -64,6 +64,8 @@ These instructions will help you set up the project on your local machine for de
 ### Setting Up the Development Environment
 
 ### Frontend
+![Projects](/front/public/images/landing2.png)
+
 
 - **Next.js**: React framework for building the user interface, providing server-side rendering for faster load times and better SEO.
 - **Vercel**: Deployment and hosting platform, offering automatic scaling and a global CDN.
